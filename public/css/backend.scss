@@ -1,0 +1,48 @@
+.tl_login_form .formbody {
+  padding-top: 0;
+}
+
+.oauth-login-container {
+  padding: 45px;
+  @media (min-width: 1160px) {
+    & {
+      //padding-bottom: 0;
+    }
+  }
+
+  .formbody_oauth_buttons {
+    padding: 8px 0;
+
+    .login-frontend-link {
+      margin-top: 1rem;
+      display: flex;
+      justify-content: end;
+    }
+  }
+
+  .login-btn-separator-container {
+    margin-top: 20px;
+    margin-bottom: 20px;
+
+    .login-btn-separator {
+      display: flex;
+      align-items: center;
+      text-align: center;
+      color: #c6c6c6;
+    }
+
+    .login-btn-separator::before, .login-btn-separator::after {
+      content: '';
+      flex: 1;
+      border-bottom: 1px solid #d4d4d4;
+    }
+
+    .login-btn-separator::before {
+      margin-right: .75em;
+    }
+
+    .login-btn-separator::after {
+      margin-left: .75em;
+    }
+  }
+}

@@ -1,0 +1,36 @@
+.tl_login_form .formbody {
+    padding-top: 0;
+}
+
+.oauth-login-container {
+    padding: 45px;
+}
+.oauth-login-container .formbody_oauth_buttons {
+    padding: 8px 0;
+}
+.oauth-login-container .formbody_oauth_buttons .login-frontend-link {
+    margin-top: 1rem;
+    display: flex;
+    justify-content: end;
+}
+.oauth-login-container .login-btn-separator-container {
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+.oauth-login-container .login-btn-separator-container .login-btn-separator {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    color: #c6c6c6;
+}
+.oauth-login-container .login-btn-separator-container .login-btn-separator::before, .oauth-login-container .login-btn-separator-container .login-btn-separator::after {
+    content: "";
+    flex: 1;
+    border-bottom: 1px solid #d4d4d4;
+}
+.oauth-login-container .login-btn-separator-container .login-btn-separator::before {
+    margin-right: 0.75em;
+}
+.oauth-login-container .login-btn-separator-container .login-btn-separator::after {
+    margin-left: 0.75em;
+}

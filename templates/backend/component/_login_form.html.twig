@@ -1,0 +1,24 @@
+{% block login_form_backend %}
+    <form action="{{ url }}" class="login-form-backend" method="post">
+        <div class="formbody_oauth_buttons">
+            <input type="hidden" name="FORM_SUBMIT" value="github-login-backend">
+            {% if enable_csrf_token_check|default %}
+                <input type="hidden" name="REQUEST_TOKEN" value="{{ request_token }}">
+            {% endif %}
+            <input type="hidden" name="_target_path" value="{{ target_path }}">
+            <input type="hidden" name="_always_use_target_path" value="{{ always_use_target_path }}">
+
+            {% block github_login_button %}
+                {{ login_button|raw }}
+            {% endblock %}
+
+            {% if show_frontend_link|default %}
+                {% block login_frontend_link %}
+                    <div class="login-frontend-link">
+                        <a href="/" class="footer_preview">{{ 'MSC.feLink'|trans({}, 'contao_default') }} ›</a>
+                    </div>
+                {% endblock %}
+            {% endif %}
+        </div>
+    </form>
+{% endblock %}

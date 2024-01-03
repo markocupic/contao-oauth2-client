@@ -1,0 +1,77 @@
+:root {
+    --github-login-button-bg-color: #000000;
+    --github-login-button-bg-color-hover: #000000;
+}
+
+.login-btn-container {
+    width: 100%;
+    position: relative;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: stretch;
+}
+.login-btn-container button:not(:disabled):not(.disabled):active {
+    color: #fff;
+    border: 0;
+}
+.login-btn-container button:hover {
+    background-color: var(--github-login-button-bg-color-hover) !important;
+    color: #fff !important;
+}
+.login-btn-container button:focus {
+    outline: none !important;
+}
+.login-btn-container button {
+    display: flex;
+    align-content: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    cursor: pointer;
+    flex-grow: 1;
+    font-weight: 400;
+    user-select: none;
+    background-color: var(--github-login-button-bg-color);
+    margin: 4px 0;
+    font-family: inherit;
+    overflow: visible;
+    transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out;
+    color: #ffffff;
+    font-size: 13px;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 11px;
+    align-items: center;
+    flex-direction: row;
+    width: 100%;
+    min-height: 36px;
+    line-height: 1;
+}
+.login-btn-container button[disabled] {
+    background-color: var(--github-login-button-bg-color-hover);
+    border-color: var(--github-login-button-bg-color-hover);
+    opacity: 1;
+}
+.login-btn-container button.button--loading svg, .login-btn-container button.button--loading .login-btn--btn-text {
+    display: none;
+}
+.login-btn-container .button--loading::after {
+    content: "";
+    width: 18px;
+    height: 18px;
+    border: 3px solid transparent;
+    border-top-color: #ffffff;
+    border-radius: 50%;
+    animation: button-loading-spinner 1s ease infinite;
+    box-sizing: border-box;
+}
+.login-btn-container button svg {
+    margin-right: 12px;
+}
+@keyframes button-loading-spinner {
+    from {
+        transform: rotate(0turn);
+    }
+    to {
+        transform: rotate(1turn);
+    }
+}

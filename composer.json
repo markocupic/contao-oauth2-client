@@ -1,0 +1,56 @@
+{
+    "name": "markocupic/contao-oauth2-client",
+    "description": "Contao OAuth2 Client",
+    "keywords": [
+        "contao",
+        "oauth2 wraper plugin"
+    ],
+    "type": "contao-bundle",
+    "license": "GPL-3.0-or-later",
+    "authors": [
+        {
+            "name": "Marko Cupic",
+            "email": "m.cupic@gmx.ch",
+            "homepage": "https://github.com/markocupic",
+            "role": "Developer"
+        }
+    ],
+    "support": {
+        "issues": "https://github.com/markocupic/contao-oauth2-client/issues",
+        "source": "https://github.com/markocupic/contao-oauth2-client"
+    },
+    "require": {
+        "php": "^8.2",
+        "contao/core-bundle": "^5.2",
+        "league/oauth2-client": "^2.7",
+        "markocupic/contao-twig-assets": "^1.1",
+        "symfony/config": "^6.4 || ^7.0",
+        "symfony/dependency-injection": "^6.4 || ^7.0",
+        "symfony/http-foundation": "^6.4 || ^7.0",
+        "symfony/http-kernel": "^6.4 || ^7.0",
+        "symfony/security-core": "^6.4|| ^7.0",
+        "symfony/security-http": "^6.4 || ^7.0"
+    },
+    "require-dev": {
+        "contao/manager-plugin": "^2.12"
+    },
+    "autoload": {
+        "psr-4": {
+            "Markocupic\\ContaoOAuth2Client\\": "src/"
+        }
+    },
+    "config": {
+        "allow-plugins": {
+            "contao-components/installer": false,
+            "contao/manager-plugin": false,
+            "contao-community-alliance/composer-plugin": true
+        }
+    },
+    "extra": {
+        "contao-manager-plugin": "Markocupic\\ContaoOAuth2Client\\ContaoManager\\Plugin"
+    },
+    "scripts": {
+        "cs-fixer": "@php tools/ecs/vendor/bin/ecs check config/ contao/ src/ templates/ tests/ --config tools/ecs/config.php --fix --ansi",
+        "unit-tests": "@php tools/phpunit/vendor/bin/phpunit -c tools/phpunit/phpunit.xml.dist"
+    }
+}

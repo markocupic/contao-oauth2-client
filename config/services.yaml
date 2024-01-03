@@ -1,0 +1,48 @@
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+        public: false
+        bind:
+            $authenticationSuccessHandler: '@contao.security.authentication_success_handler'
+
+    Markocupic\ContaoOAuth2Client\:
+        resource: ../src/
+        exclude:
+            - ../src/{DependencyInjection,Session,Event}
+            - ../src/**/*Exception.php
+
+    Markocupic\ContaoOAuth2Client\Security\UserMatcher\UserMatcherCollection:
+        arguments:
+            - !tagged_iterator contao_oauth2_client.user_matcher
+
+    Markocupic\ContaoOAuth2Client\ButtonGenerator\ButtonGeneratorCollection:
+        arguments:
+            - !tagged_iterator contao_oauth2_client.button_generator
+
+    Markocupic\ContaoOAuth2Client\OAuth2\Client\ClientFactoryCollection:
+        arguments:
+            - !tagged_iterator contao_oauth2_client.client_factory
+
+    # Add a session bag
+    markocupic.contao_oauth2_client.session.factory:
+        class: Markocupic\ContaoOAuth2Client\Session\SessionFactory
+        decorates: session.factory
+        arguments:
+            - '@markocupic.contao_oauth2_client.session.factory.inner'
+            - '@markocupic.contao_oauth2_client.session.attribute.array_attribute_bag_backend'
+            - '@markocupic.contao_oauth2_client.session.attribute.array_attribute_bag_frontend'
+
+    markocupic.contao_oauth2_client.session.attribute.array_attribute_bag_backend:
+        class: Markocupic\ContaoOAuth2Client\Session\Attribute\ArrayAttributeBag
+        arguments:
+            - _markocupic_contao_oauth2_client_attr_backend
+        calls:
+            - [ setName, [ markocupic_contao_oauth2_client_attr_backend ] ]
+
+    markocupic.contao_oauth2_client.session.attribute.array_attribute_bag_frontend:
+        class: Markocupic\ContaoOAuth2Client\Session\Attribute\ArrayAttributeBag
+        arguments:
+            - _markocupic_contao_oauth2_client_attr_frontend
+        calls:
+            - [ setName, [ markocupic_contao_oauth2_client_attr_frontend ] ]
