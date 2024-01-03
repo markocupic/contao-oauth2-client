@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /*
  * This file is part of Contao OAuth2 Client.
  *
@@ -9,7 +11,6 @@
  * please view the LICENSE file that was distributed with this source code.
  * @link https://github.com/markocupic/contao-oauth2-client
  */
-declare(strict_types=1);
 
 namespace Markocupic\ContaoOAuth2Client\Tests\ContaoManager;
 
@@ -20,13 +21,10 @@ use Contao\TestCase\ContaoTestCase;
 use Markocupic\ContaoOAuth2Client\ContaoManager\Plugin;
 use Markocupic\ContaoOAuth2Client\MarkocupicContaoOAuth2Client;
 
-/**
- * @package Markocupic\ContaoOAuth2Client\Tests\ContaoManager
- */
 class PluginTest extends ContaoTestCase
 {
     /**
-     * Test Contao manager plugin class instantiation
+     * Test Contao manager plugin class instantiation.
      */
     public function testInstantiation(): void
     {
@@ -34,7 +32,7 @@ class PluginTest extends ContaoTestCase
     }
 
     /**
-     * Test returns the bundles
+     * Test returns the bundles.
      */
     public function testGetBundles(): void
     {
@@ -48,5 +46,4 @@ class PluginTest extends ContaoTestCase
         $this->assertSame(MarkocupicContaoOAuth2Client::class, $bundles[0]->getName());
         $this->assertSame([ContaoCoreBundle::class], $bundles[0]->getLoadAfter());
     }
-
 }

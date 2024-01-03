@@ -13,6 +13,7 @@ declare(strict_types=1);
  */
 
 namespace Markocupic\ContaoOAuth2Client\OAuth2\Client;
+
 use League\OAuth2\Client\Provider\AbstractProvider;
 use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
 
@@ -31,4 +32,3 @@ interface ClientFactoryInterface
 
     public function createClient(array $options): AbstractProvider;
 }
-

@@ -67,7 +67,7 @@ class OAuth2StartController extends AbstractController
 
         $system = $this->framework->getAdapter(System::class);
 
-        // Check csrf token
+        // Check CSRF token
         if ($system->getContainer()->getParameter('markocupic_contao_oauth2_client.enable_csrf_token_check')) {
             $csrfTokenName = $system->getContainer()->getParameter('contao.csrf_token_name');
             $this->validateCsrfToken($request->get('REQUEST_TOKEN'), $this->tokenManager, $csrfTokenName);

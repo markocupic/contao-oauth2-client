@@ -40,9 +40,10 @@ readonly class ClientFactoryManager
     public function getAvailableClientFactories(): array
     {
         $clientFactories = [];
-        foreach ($this->clientFactoryCollection->getClients() as $clientFactory){
+
+        foreach ($this->clientFactoryCollection->getClients() as $clientFactory) {
             $clientFactories[] = $clientFactory;
-        };
+        }
 
         return $clientFactories;
     }
@@ -54,12 +55,11 @@ readonly class ClientFactoryManager
     {
         $clientFactories = [];
 
-        foreach ($this->getAvailableClientFactories() as $clientFactory){
-            if($clientFactory->getConfigByKey('enable_login'))
-            {
+        foreach ($this->getAvailableClientFactories() as $clientFactory) {
+            if ($clientFactory->getConfigByKey('enable_login')) {
                 $clientFactories[] = $clientFactory;
             }
-        };
+        }
 
         return $clientFactories;
     }
@@ -72,7 +72,7 @@ readonly class ClientFactoryManager
     public function getAvailableClientsByFirewallName(string $firewall): array
     {
         if (!\in_array($firewall, ['contao_backend', 'contao_frontend'], true)) {
-            throw new \Exception(sprintf('The firewall parameter contains an invalid firewall name (%s). Did you mean one of this "%s","%s"?', $firewall, 'contao_backend', 'contao_frontend'));
+            throw new \Exception(sprintf('Argument #1 contains an invalid firewall name (%s). Did you mean one of these "%s","%s"?', $firewall, 'contao_backend', 'contao_frontend'));
         }
 
         $clientFactories = [];

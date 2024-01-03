@@ -63,15 +63,19 @@ class Authenticator extends AbstractAuthenticator
 
     public function supports(Request $request): bool
     {
-        if (empty($request->query->get('code'))) {
-            return false;
-        }
-
         if (!$request->attributes->has('_scope')) {
             return false;
         }
 
         $scope = $request->attributes->get('_scope');
+
+        if ($request->attributes->get('_route') !== self::ALLOWED_ROUTES[$scope]) {
+            return false;
+        }
+
+        if (empty($request->query->get('code'))) {
+            return false;
+        }
 
         if (!$request->attributes->has('_oauth2_client')) {
             return false;
@@ -79,12 +83,9 @@ class Authenticator extends AbstractAuthenticator
 
         $clientName = $request->attributes->get('_oauth2_client');
 
-        if (!\in_array($clientName, array_map(static fn ($clientFactory) => $clientFactory->getName(), $this->clientFactoryManager->getAvailableAndActiveClientFactories()), true)) {
-            return false;
-        }
+        $clientFactory = $this->clientFactoryManager->getClientFactory($clientName);
 
-        // Do only log in users from allowed routes
-        if ($request->attributes->get('_route') !== self::ALLOWED_ROUTES[$scope]) {
+        if (!$clientFactory->getConfigByKey('enable_login')) {
             return false;
         }
 
@@ -119,12 +120,12 @@ class Authenticator extends AbstractAuthenticator
         $request->request->set('_always_use_target_path', $sessionBag->get('_always_use_target_path'));
 
         if (empty($request->query->get('state')) || empty($this->getSessionBag($request)->get('oauth2state')) || $request->query->get('state') !== $this->getSessionBag($request)->get('oauth2state')) {
-            // This will trigger self::onAuthenticationFailure()
+            // Exceptions will automatically trigger self::onAuthenticationFailure()
             $this->throwAuthenticationException(OAuth2AuthenticationException::ERROR_INVALID_OAUTH_STATE);
         }
 
         try {
-            // Get the client name (backend or frontend) from the contao scope
+            // Get the oauth2 client name from attributes
             $clientName = $request->attributes->get('_oauth2_client');
 
             $client = $this->clientFactoryManager
@@ -138,30 +139,29 @@ class Authenticator extends AbstractAuthenticator
             ]);
 
             // Dispatch the GetAccessTokenEvent event
-            $event = new GetAccessTokenEvent($accessToken, $request, $request->attributes->get('_scope'));
+            $event = new GetAccessTokenEvent($accessToken, $request);
             $this->eventDispatcher->dispatch($event, GetAccessTokenEvent::NAME);
 
-            // Get the email address from resource owner.
+            // Get the resource owner object.
             $resourceOwner = $client->getResourceOwner($accessToken);
         } catch (IdentityProviderException $e) {
+            // Exceptions will automatically trigger self::onAuthenticationFailure()
             $message->addError($this->translator->trans('OAUTH_CLIENT_ERR.identityProviderException', [$e->getMessage()], 'contao_default'));
 
             if ($this->scopeMatcher->isBackendRequest($request)) {
-                // This will trigger self::onAuthenticationFailure()
                 $this->throwAuthenticationException(OAuth2AuthenticationException::ERROR_CONTAO_BACKEND_USER_NOT_FOUND);
             } else {
-                // This will trigger self::onAuthenticationFailure()
                 $this->throwAuthenticationException(OAuth2AuthenticationException::ERROR_CONTAO_FRONTEND_USER_NOT_FOUND);
             }
         } catch (\Exception $e) {
-            // This will trigger self::onAuthenticationFailure()
+            // Exceptions will automatically trigger self::onAuthenticationFailure()
             $this->throwAuthenticationException(OAuth2AuthenticationException::ERROR_UNEXPECTED);
         }
 
-        $userMatcher = $this->getSupportedUserMatcher($clientName);
+        $userMatcher = $this->findUserMatcher($clientName);
 
         if (null === $userMatcher) {
-            throw new \Exception(sprintf('Found no supported UserMatcher class for OAuth2client "%s".', $clientName));
+            throw new \Exception(sprintf('No supported user matcher class found for OAuth2 client "%s".', $clientName));
         }
 
         $contaoUser = $userMatcher->getContaoUserFromResourceOwner($resourceOwner, $request);
@@ -170,15 +170,15 @@ class Authenticator extends AbstractAuthenticator
             $message->addError($this->translator->trans('OAUTH_CLIENT_ERR.userNotFound', [$userMatcher->getResourceOwnerIdentifier($resourceOwner)], 'contao_default'));
 
             if ($this->scopeMatcher->isBackendRequest($request)) {
-                // This will trigger self::onAuthenticationFailure()
+                // This will again trigger self::onAuthenticationFailure()
                 $this->throwAuthenticationException(OAuth2AuthenticationException::ERROR_CONTAO_BACKEND_USER_NOT_FOUND);
             } else {
-                // This will trigger self::onAuthenticationFailure()
+                // This will again trigger self::onAuthenticationFailure()
                 $this->throwAuthenticationException(OAuth2AuthenticationException::ERROR_CONTAO_FRONTEND_USER_NOT_FOUND);
             }
         }
 
-        // Get the correct user model.
+        // Get the correct Contao user model.
         if ($this->scopeMatcher->isBackendRequest($request)) {
             $userAdapter = $this->framework->getAdapter(UserModel::class);
         } else {
@@ -195,7 +195,7 @@ class Authenticator extends AbstractAuthenticator
 
     public function onAuthenticationSuccess(Request $request, TokenInterface $token, $firewallName): Response|null
     {
-        // Clear session.
+        // Clear the session.
         $this->getSessionBag($request)->clear();
 
         // Trigger the on authentication success handler from the Contao Core.
@@ -236,7 +236,7 @@ class Authenticator extends AbstractAuthenticator
         throw new OAuth2AuthenticationException(OAuth2AuthenticationException::ERROR_MAP[$code], $code);
     }
 
-    private function getSupportedUserMatcher(string $clientName): UserMatcherInterface|null
+    private function findUserMatcher(string $clientName): UserMatcherInterface|null
     {
         /** @var UserMatcherInterface $userMatcher */
         foreach ($this->userMatcherCollection->getMatchers() as $userMatcher) {

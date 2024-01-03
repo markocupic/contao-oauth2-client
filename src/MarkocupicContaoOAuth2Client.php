@@ -14,7 +14,6 @@ declare(strict_types=1);
 
 namespace Markocupic\ContaoOAuth2Client;
 
-use Markocupic\ContaoOAuth2Client\DependencyInjection\Compiler\AddContaoOAuth2ClientsPass;
 use Markocupic\ContaoOAuth2Client\DependencyInjection\MarkocupicContaoOAuth2ClientExtension;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\HttpKernel\Bundle\Bundle;

@@ -24,7 +24,6 @@ use Symfony\Component\HttpFoundation\Request;
 
 abstract class AbstractUserMatcher implements UserMatcherInterface
 {
-
     /**
      * Return the Contao User or null
      * if the user does not exist.

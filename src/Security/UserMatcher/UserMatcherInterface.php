@@ -16,8 +16,8 @@ namespace Markocupic\ContaoOAuth2Client\Security\UserMatcher;
 
 use Contao\User;
 use League\OAuth2\Client\Provider\ResourceOwnerInterface;
-use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
+use Symfony\Component\HttpFoundation\Request;
 
 #[AutoconfigureTag('contao_oauth2_client.user_matcher')]
 interface UserMatcherInterface

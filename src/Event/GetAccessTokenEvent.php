@@ -25,7 +25,6 @@ class GetAccessTokenEvent extends Event
     public function __construct(
         private readonly AccessTokenInterface $accessToken,
         private readonly Request $request,
-        private readonly string $contaoScope,
     ) {
     }
 
@@ -41,6 +40,6 @@ class GetAccessTokenEvent extends Event
 
     public function getContaoScope(): string
     {
-        return $this->contaoScope;
+        return $this->request->attributes->get('_scope');
     }
 }

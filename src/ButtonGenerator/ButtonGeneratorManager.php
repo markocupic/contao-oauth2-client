@@ -16,22 +16,16 @@ namespace Markocupic\ContaoOAuth2Client\ButtonGenerator;
 
 readonly final class ButtonGeneratorManager
 {
-    
     public function __construct(
         private ButtonGeneratorCollection $buttonGeneratorCollection,
     ) {
     }
 
-    /**
-     * @param string $clientName
-     * @return ButtonGeneratorInterface|null
-     */
     public function getButtonGeneratorForClient(string $clientName): ButtonGeneratorInterface|null
     {
         /** @var ButtonGeneratorInterface $buttonGenerator */
-        foreach ($this->buttonGeneratorCollection->getButtonGenerators() as $buttonGenerator)
-        {
-            if(in_array($clientName, $buttonGenerator->supports())){
+        foreach ($this->buttonGeneratorCollection->getButtonGenerators() as $buttonGenerator) {
+            if (\in_array($clientName, $buttonGenerator->supports(), true)) {
                 return $buttonGenerator;
             }
         }

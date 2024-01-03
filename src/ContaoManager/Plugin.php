@@ -68,6 +68,4 @@ class Plugin implements BundlePluginInterface, RoutingPluginInterface, Extension
 
         return $extensionConfigs;
     }
-
-
 }

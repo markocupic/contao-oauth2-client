@@ -20,7 +20,7 @@ use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
 interface ButtonGeneratorInterface
 {
     /**
-     * Returns all supported oauth clients
+     * Returns all supported OAuth2 clients
      * e.g. ['github_backend','github_frontend'].
      *
      * @return array<string>
