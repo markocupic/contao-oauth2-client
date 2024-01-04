@@ -14,7 +14,9 @@ declare(strict_types=1);
 
 namespace Markocupic\ContaoOAuth2Client\OAuth2\Client;
 
+use Contao\User;
 use League\OAuth2\Client\Provider\AbstractProvider;
+use League\OAuth2\Client\Provider\ResourceOwnerInterface;
 use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
 
 #[AutoconfigureTag('contao_oauth2_client.client_factory')]
@@ -22,7 +24,7 @@ interface ClientFactoryInterface
 {
     public function getName(): string;
 
-    public function getProvider(): string;
+    public function getProviderType(): string;
 
     public function getContaoFirewall(): string;
 
@@ -31,4 +33,6 @@ interface ClientFactoryInterface
     public function getConfigByKey(string $key): mixed;
 
     public function createClient(array $options): AbstractProvider;
+
+    public function getContaoUserFromResourceOwner(ResourceOwnerInterface $resourceOwner, string $key = 'email'): User|null;
 }

@@ -12,8 +12,15 @@ declare(strict_types=1);
  * @link https://github.com/markocupic/contao-oauth2-client
  */
 
-namespace Markocupic\ContaoOAuth2Client\OAuth2\Client\Exception;
+namespace Markocupic\ContaoOAuth2Client\Security\Authenticator\Exception;
 
-class InvalidClientConfigurationException extends \RuntimeException
+use Symfony\Component\Security\Core\Exception\AuthenticationException;
+
+class NoContaoMemberFoundAuthenticationException extends AuthenticationException
 {
+
+    public function getMessageKey(): string
+    {
+        return 'noContaoMemberFoundAuth';
+    }
 }

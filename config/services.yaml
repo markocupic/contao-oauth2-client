@@ -12,10 +12,6 @@ services:
             - ../src/{DependencyInjection,Session,Event}
             - ../src/**/*Exception.php
 
-    Markocupic\ContaoOAuth2Client\Security\UserMatcher\UserMatcherCollection:
-        arguments:
-            - !tagged_iterator contao_oauth2_client.user_matcher
-
     Markocupic\ContaoOAuth2Client\ButtonGenerator\ButtonGeneratorCollection:
         arguments:
             - !tagged_iterator contao_oauth2_client.button_generator

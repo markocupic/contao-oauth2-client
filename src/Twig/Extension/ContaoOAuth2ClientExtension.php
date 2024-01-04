@@ -12,21 +12,18 @@ declare(strict_types=1);
  * @link https://github.com/markocupic/contao-oauth2-client
  */
 
-namespace Markocupic\ContaoOAuth2Client\EventListener\Contao;
+namespace Markocupic\ContaoOAuth2Client\Twig\Extension;
 
-use Contao\CoreBundle\DependencyInjection\Attribute\AsHook;
 use Markocupic\ContaoOAuth2Client\Controller\OAuth2StartController;
-use Markocupic\ContaoOAuth2Client\OAuth2\Client\ClientFactoryManager
-;
+use Markocupic\ContaoOAuth2Client\OAuth2\Client\ClientFactoryManager;
 use Symfony\Component\HttpFoundation\UriSigner;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Routing\RouterInterface;
+use Twig\Extension\AbstractExtension;
+use Twig\TwigFunction;
 
-#[AsHook('replaceInsertTags')]
-class LoginRouteInsertTagListener
+class ContaoOAuth2ClientExtension extends AbstractExtension
 {
-    public const TAG = 'oauth_login_url';
-
     public function __construct(
         private readonly ClientFactoryManager $clientFactoryManager,
         private readonly RouterInterface $router,
@@ -34,21 +31,15 @@ class LoginRouteInsertTagListener
     ) {
     }
 
-    public function __invoke(string $tag): string|false
+    public function getFunctions(): array
     {
-        $chunks = explode('::', $tag);
+        return [
+            new TwigFunction('generate_oauth2_start_url_for', [$this, 'generateStartUrlFor']),
+        ];
+    }
 
-        if (self::TAG !== $chunks[0]) {
-            return false;
-        }
-
-        $clientFactories = $this->clientFactoryManager->getAvailableAndActiveClientFactories();
-
-        if (empty($chunks[1]) || !\in_array($chunks[1], array_map(static fn ($clientFactories) => $clientFactories->getName(), $clientFactories), true)) {
-            return false;
-        }
-
-        $clientName = $chunks[1];
+    public function generateStartUrlFor(string $clientName): string
+    {
         $clientFactory = $this->clientFactoryManager->getClientFactory($clientName);
         $route = 'contao_backend' === $clientFactory->getContaoFirewall() ? OAuth2StartController::LOGIN_ROUTE_BACKEND : OAuth2StartController::LOGIN_ROUTE_FRONTEND;
 

@@ -1,6 +1,6 @@
 :root {
-  --github-login-button-bg-color: #000000;
-  --github-login-button-bg-color-hover: #000000;
+  --oauth2-login-button-bg-color: #000000;
+  --oauth2-login-button-bg-color-hover: #000000;
 }
 
 .login-btn-container {
@@ -16,7 +16,7 @@
   }
 
   button:hover {
-    background-color: var(--github-login-button-bg-color-hover) !important;
+    background-color: var(--oauth2-login-button-bg-color-hover) !important;
     color: #fff !important;
   }
 
@@ -33,7 +33,7 @@
     flex-grow: 1;
     font-weight: 400;
     user-select: none;
-    background-color: var(--github-login-button-bg-color);
+    background-color: var(--oauth2-login-button-bg-color);
     margin: 4px 0;
     font-family: inherit;
     overflow: visible;
@@ -51,8 +51,8 @@
   }
 
   button[disabled] {
-    background-color: var(--github-login-button-bg-color-hover);
-    border-color: var(--github-login-button-bg-color-hover);
+    background-color: var(--oauth2-login-button-bg-color-hover);
+    border-color: var(--oauth2-login-button-bg-color-hover);
     opacity: 1;
   }
 

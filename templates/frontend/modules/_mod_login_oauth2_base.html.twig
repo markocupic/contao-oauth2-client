@@ -1,0 +1,45 @@
+<!-- indexer::stop -->
+{% block mod_oauth_login_frontend %}
+    {% block oauth_login_frontend_scripts %}
+        {% do addJavascriptResource('bundles/markocupiccontaooauth2client/js/login_button_animation.js|static') %}
+        {% do addCssResource('bundles/markocupiccontaooauth2client/css/login_button.css|static') %}
+    {% endblock %}
+
+    {% block oauth_login_frontend_headline %}
+    <div class="{{ class }} {{ logout|default ? 'logout' : 'login' }} block" {{ cssID }} data-oauth2client="{{ client_name }}">
+        {% if headline|default %}
+            <{{ hl }}>{{ headline }}</{{ hl }}>
+        {% endif %}
+    {% endblock %}
+
+    {% block oauth_login_frontend_form %}
+        <div class="oauth-login-frontend">
+            {# <h1>{{ 'MSC.loginBT'|trans({}, 'contao_default') }}</h1> #}
+            <form action="{{ logout|default ? action : generate_oauth2_start_url_for(client_name) }}" id="oauthLoginForm_{{ id }}" class="oauth-login-form-frontend" method="post">
+                <div class="formbody">
+                    {% if message|default %}
+                        <p class="error">{{ message }}</p>
+                    {% endif %}
+                    <input type="hidden" name="FORM_SUBMIT" value="{{ logout|default ? formId : client_name }}">
+                    <input type="hidden" name="REQUEST_TOKEN" value="{{ Template.requestToken|default('') }}">
+                    <input type="hidden" name="_target_path" value="{{ targetPath|default('') }}">
+                    <input type="hidden" name="_failure_path" value="{{ app.request.getUri() }}">
+                    <input type="hidden" name="_always_use_target_path" value="{{ forceTargetPath|default('') }}">
+                    {% if logout|default %}
+                        {% block oauth_logged_in_as %}
+                            <p class="login_info">{{ loggedInAs }}<br>{{ lastLogin }}</p>
+                            <div class="widget widget-submit">
+                                <button type="submit" class="submit">{{ slabel }}</button>
+                            </div>
+                        {% endblock %}
+                    {% else %}
+                        {% block oauth_login_button %}
+                            {# Inject the login button in the parent template #}
+                        {% endblock %}
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+    {% endblock %}
+{% endblock %}
+<!-- indexer::continue -->

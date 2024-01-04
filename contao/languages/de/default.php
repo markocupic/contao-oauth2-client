@@ -15,11 +15,15 @@ declare(strict_types=1);
 /*
  * Miscellaneous
  */
-$GLOBALS['TL_LANG']['OAUTH_CLIENT_MSC']['logInWithGitHub'] = 'Login mit GitHub';
 $GLOBALS['TL_LANG']['OAUTH_CLIENT_MSC']['or'] = 'oder';
 
 /*
  * Errors
  */
-$GLOBALS['TL_LANG']['OAUTH_CLIENT_ERR']['userWithNotFound'] = 'Es wurde kein Benutzer mit der Email-Adresse "%s" in der Datenbank gefunden.';
-$GLOBALS['TL_LANG']['OAUTH_CLIENT_ERR']['identityProviderException'] = 'Zugriff auf GitHub Benutzer aufgrund eines Konfigurationsfehlers nicht möglich. Bitte überprüfen Sie die GitHub App Einstellungen.';
+$GLOBALS['TL_LANG']['OAUTH_CLIENT_ERR']['noContaoUserFoundAuth'] = 'Login-Versuch gescheitert. Sie wurden nicht in der User-Datenbank gefunden.';
+$GLOBALS['TL_LANG']['OAUTH_CLIENT_ERR']['noContaoMemberFoundAuth'] = 'Login-Versuch gescheitert Sie wurden nicht in der Member-Datenbank gefunden.';
+$GLOBALS['TL_LANG']['OAUTH_CLIENT_ERR']['identityProviderAuth'] = 'Login-Versuch gescheitert. Kein Zugriff auf die vom Provider übermittelten Benutzerdaten möglich.';
+$GLOBALS['TL_LANG']['OAUTH_CLIENT_ERR']['unexpectedAuth'] = 'Login-Versuch gescheitert. Es ist ein unerwarteter Fehler aufgetreten.';
+$GLOBALS['TL_LANG']['OAUTH_CLIENT_ERR']['noAuthCodeAuth'] = 'Login-Versuch gescheitert. Haben Sie die App autorisiert?';
+$GLOBALS['TL_LANG']['OAUTH_CLIENT_ERR']['invalidStateAuth'] = 'Login-Versuch gescheitert. Es wurde kein gültiger State-Parameter in der Callback-URL gefunden.';
+$GLOBALS['TL_LANG']['OAUTH_CLIENT_ERR']['clientNotActivatedAuth'] = 'Login-Versuch mit dem ausgewählten Login Provider gescheitert. Der Client ist nicht aktiviert.';

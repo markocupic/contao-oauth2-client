@@ -24,9 +24,10 @@ use League\OAuth2\Client\Provider\Exception\IdentityProviderException;
 use Markocupic\ContaoOAuth2Client\Controller\OAuth2RedirectController;
 use Markocupic\ContaoOAuth2Client\Event\GetAccessTokenEvent;
 use Markocupic\ContaoOAuth2Client\OAuth2\Client\ClientFactoryManager;
-use Markocupic\ContaoOAuth2Client\Security\Authenticator\Exception\OAuth2AuthenticationException;
-use Markocupic\ContaoOAuth2Client\Security\UserMatcher\UserMatcherCollection;
-use Markocupic\ContaoOAuth2Client\Security\UserMatcher\UserMatcherInterface;
+use Markocupic\ContaoOAuth2Client\Security\Authenticator\Exception\InvalidStateAuthenticationException;
+use Markocupic\ContaoOAuth2Client\Security\Authenticator\Exception\NoAuthCodeAuthenticationException;
+use Markocupic\ContaoOAuth2Client\Security\Authenticator\Exception\NoContaoMemberFoundAuthenticationException;
+use Markocupic\ContaoOAuth2Client\Security\Authenticator\Exception\NoContaoUserFoundAuthenticationException;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -56,8 +57,7 @@ class Authenticator extends AbstractAuthenticator
         private readonly EventDispatcherInterface $eventDispatcher,
         private readonly ScopeMatcher $scopeMatcher,
         private readonly TranslatorInterface $translator,
-        private readonly UserMatcherCollection $userMatcherCollection,
-        private readonly LoggerInterface|null $logger = null,
+        private readonly LoggerInterface|null $contaoAccessLogger = null,
     ) {
     }
 
@@ -70,22 +70,6 @@ class Authenticator extends AbstractAuthenticator
         $scope = $request->attributes->get('_scope');
 
         if ($request->attributes->get('_route') !== self::ALLOWED_ROUTES[$scope]) {
-            return false;
-        }
-
-        if (empty($request->query->get('code'))) {
-            return false;
-        }
-
-        if (!$request->attributes->has('_oauth2_client')) {
-            return false;
-        }
-
-        $clientName = $request->attributes->get('_oauth2_client');
-
-        $clientFactory = $this->clientFactoryManager->getClientFactory($clientName);
-
-        if (!$clientFactory->getConfigByKey('enable_login')) {
             return false;
         }
 
@@ -119,76 +103,86 @@ class Authenticator extends AbstractAuthenticator
         $request->request->set('_target_path', $sessionBag->get('_target_path'));
         $request->request->set('_always_use_target_path', $sessionBag->get('_always_use_target_path'));
 
-        if (empty($request->query->get('state')) || empty($this->getSessionBag($request)->get('oauth2state')) || $request->query->get('state') !== $this->getSessionBag($request)->get('oauth2state')) {
-            // Exceptions will automatically trigger self::onAuthenticationFailure()
-            $this->throwAuthenticationException(OAuth2AuthenticationException::ERROR_INVALID_OAUTH_STATE);
-        }
+        // Get the oauth2 client name from attributes
+        $clientName = $request->attributes->get('_oauth2_client');
+
+        $clientFactory = $this->clientFactoryManager->getClientFactory($clientName);
+        $client = $clientFactory->createClient();
 
         try {
-            // Get the oauth2 client name from attributes
-            $clientName = $request->attributes->get('_oauth2_client');
+            if (!$clientFactory->getConfigByKey('enable_login')) {
+                throw new ClientNotActivatedAuthenticationException('Authentication failed! Client not activated.');
+            }
 
-            $client = $this->clientFactoryManager
-                ->getClientFactory($clientName)
-                ->createClient()
-            ;
+            if (empty($request->query->get('code'))) {
+                throw new NoAuthCodeAuthenticationException('Authentication failed! Did you authorize our app?');
+            }
+
+            if (empty($request->query->get('state')) || empty($this->getSessionBag($request)->get('oauth2state')) || $request->query->get('state') !== $this->getSessionBag($request)->get('oauth2state')) {
+                throw new InvalidStateAuthenticationException('Authentication failed! Invalid state parameter passed in callback URL.');
+            }
 
             // Try to get an access token using the authorization code grant.
             $accessToken = $client->getAccessToken('authorization_code', [
                 'code' => $request->query->get('code'),
             ]);
 
-            // Dispatch the GetAccessTokenEvent event
+            // Get the resource owner object.
+            $resourceOwner = $client->getResourceOwner($accessToken);
+
+            // Dispatch markocupic_contao_oauth2_client.get_access_token event
+            // use a subscriber to e.g. generate missing Contao user
             $event = new GetAccessTokenEvent($accessToken, $request);
             $this->eventDispatcher->dispatch($event, GetAccessTokenEvent::NAME);
 
-            // Get the resource owner object.
-            $resourceOwner = $client->getResourceOwner($accessToken);
-        } catch (IdentityProviderException $e) {
-            // Exceptions will automatically trigger self::onAuthenticationFailure()
-            $message->addError($this->translator->trans('OAUTH_CLIENT_ERR.identityProviderException', [$e->getMessage()], 'contao_default'));
+            $contaoUser = $clientFactory->getContaoUserFromResourceOwner($resourceOwner);
 
-            if ($this->scopeMatcher->isBackendRequest($request)) {
-                $this->throwAuthenticationException(OAuth2AuthenticationException::ERROR_CONTAO_BACKEND_USER_NOT_FOUND);
-            } else {
-                $this->throwAuthenticationException(OAuth2AuthenticationException::ERROR_CONTAO_FRONTEND_USER_NOT_FOUND);
+            if (null === $contaoUser) {
+                if ($this->scopeMatcher->isBackendRequest($request)) {
+                    throw new NoContaoUserFoundAuthenticationException('No matching Contao Backend User found in the Database.');
+                }
+
+                throw new NoContaoMemberFoundAuthenticationException('No matching Contao Frontend User found in the Database.');
             }
+
+            // The user exists and is not disabled. Get the correct Contao user model.
+            if ($this->scopeMatcher->isBackendRequest($request)) {
+                $userAdapter = $this->framework->getAdapter(UserModel::class);
+            } else {
+                $userAdapter = $this->framework->getAdapter(MemberModel::class);
+            }
+
+            $t = $userAdapter->getTable();
+            $where = ["$t.username = ?"];
+
+            $contaoUser = $userAdapter->findBy($where, [$contaoUser->username]);
+
+            if (null === $contaoUser) {
+                if ($this->scopeMatcher->isBackendRequest($request)) {
+                    throw new NoContaoUserFoundAuthenticationException('No matching Contao Backend User found in the Database.');
+                }
+
+                throw new NoContaoMemberFoundAuthenticationException('No matching Contao Frontend User found in the Database.');
+            }
+        } catch (NoAuthCodeAuthenticationException|InvalidStateAuthenticationException|NoContaoUserFoundAuthenticationException|NoContaoMemberFoundAuthenticationException|IdentityProviderException $e) {
+            $messageKey = $e instanceof IdentityProviderException ? 'identityProviderAuth' : $e->getMessageKey();
+
+            // Notify user
+            $message->addError($this->translator->trans('OAUTH_CLIENT_ERR.'.$messageKey, [], 'contao_default'));
+
+            // Log txt
+            $errorLog = sprintf('OAuth Login with APP "%s" (%s) failed with code "%s".', $clientFactory->getName(), $clientFactory->getProviderType(), $messageKey);
+
+            throw new AuthenticationException($errorLog);
         } catch (\Exception $e) {
-            // Exceptions will automatically trigger self::onAuthenticationFailure()
-            $this->throwAuthenticationException(OAuth2AuthenticationException::ERROR_UNEXPECTED);
+            // Notify user
+            $message->addError($this->translator->trans('OAUTH_CLIENT_ERR.unexpectedAuth', [], 'contao_default'));
+
+            // Log txt
+            $errorLog = sprintf('OAuth Login with APP "%s" (%s) failed with message "%s".', $clientFactory->getName(), $clientFactory->getProviderType(), $e->getMessage());
+
+            throw new AuthenticationException($errorLog);
         }
-
-        $userMatcher = $this->findUserMatcher($clientName);
-
-        if (null === $userMatcher) {
-            throw new \Exception(sprintf('No supported user matcher class found for OAuth2 client "%s".', $clientName));
-        }
-
-        $contaoUser = $userMatcher->getContaoUserFromResourceOwner($resourceOwner, $request);
-
-        if (null === $contaoUser) {
-            $message->addError($this->translator->trans('OAUTH_CLIENT_ERR.userNotFound', [$userMatcher->getResourceOwnerIdentifier($resourceOwner)], 'contao_default'));
-
-            if ($this->scopeMatcher->isBackendRequest($request)) {
-                // This will again trigger self::onAuthenticationFailure()
-                $this->throwAuthenticationException(OAuth2AuthenticationException::ERROR_CONTAO_BACKEND_USER_NOT_FOUND);
-            } else {
-                // This will again trigger self::onAuthenticationFailure()
-                $this->throwAuthenticationException(OAuth2AuthenticationException::ERROR_CONTAO_FRONTEND_USER_NOT_FOUND);
-            }
-        }
-
-        // Get the correct Contao user model.
-        if ($this->scopeMatcher->isBackendRequest($request)) {
-            $userAdapter = $this->framework->getAdapter(UserModel::class);
-        } else {
-            $userAdapter = $this->framework->getAdapter(MemberModel::class);
-        }
-
-        $t = $userAdapter->getTable();
-        $where = ["$t.username = '$contaoUser->username'"];
-
-        $contaoUser = $userAdapter->findBy($where, []);
 
         return new SelfValidatingPassport(new UserBadge($contaoUser->username));
     }
@@ -215,7 +209,7 @@ class Authenticator extends AbstractAuthenticator
 
         $sessionBag->clear();
 
-        $this->logger?->info($exception->getMessage());
+        $this->contaoAccessLogger?->info($exception->getMessage());
 
         $request->getSession()->set(SecurityRequestAttributes::AUTHENTICATION_ERROR, $exception);
 
@@ -229,22 +223,5 @@ class Authenticator extends AbstractAuthenticator
         }
 
         return $request->getSession()->getBag('markocupic_contao_oauth2_client_attr_frontend');
-    }
-
-    private function throwAuthenticationException(int $code): void
-    {
-        throw new OAuth2AuthenticationException(OAuth2AuthenticationException::ERROR_MAP[$code], $code);
-    }
-
-    private function findUserMatcher(string $clientName): UserMatcherInterface|null
-    {
-        /** @var UserMatcherInterface $userMatcher */
-        foreach ($this->userMatcherCollection->getMatchers() as $userMatcher) {
-            if (\in_array($clientName, $userMatcher->supports(), true)) {
-                return $userMatcher;
-            }
-        }
-
-        return null;
     }
 }

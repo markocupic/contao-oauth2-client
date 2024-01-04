@@ -41,7 +41,7 @@ readonly class ClientFactoryManager
     {
         $clientFactories = [];
 
-        foreach ($this->clientFactoryCollection->getClients() as $clientFactory) {
+        foreach ($this->clientFactoryCollection->gtClientFactories() as $clientFactory) {
             $clientFactories[] = $clientFactory;
         }
 
@@ -78,7 +78,7 @@ readonly class ClientFactoryManager
         $clientFactories = [];
 
         /** @var ClientFactoryInterface $clientFactory */
-        foreach ($this->clientFactoryCollection->getClients() as $clientFactory) {
+        foreach ($this->clientFactoryCollection->gtClientFactories() as $clientFactory) {
             if ($clientFactory->getContaoFirewall() === $firewall) {
                 $clientFactories[] = $clientFactory;
             }
@@ -90,7 +90,7 @@ readonly class ClientFactoryManager
     private function getMatchingClientFactory(string $clientName): ClientFactoryInterface|null
     {
         /** @var ClientFactoryInterface $clientFactory */
-        foreach ($this->clientFactoryCollection->getClients() as $clientFactory) {
+        foreach ($this->clientFactoryCollection->gtClientFactories() as $clientFactory) {
             if ($clientName === $clientFactory->getName()) {
                 return $clientFactory;
             }
