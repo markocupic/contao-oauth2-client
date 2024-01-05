@@ -24,6 +24,7 @@ use League\OAuth2\Client\Provider\Exception\IdentityProviderException;
 use Markocupic\ContaoOAuth2Client\Controller\OAuth2RedirectController;
 use Markocupic\ContaoOAuth2Client\Event\GetAccessTokenEvent;
 use Markocupic\ContaoOAuth2Client\OAuth2\Client\ClientFactoryManager;
+use Markocupic\ContaoOAuth2Client\Security\Authenticator\Exception\ClientNotActivatedAuthenticationException;
 use Markocupic\ContaoOAuth2Client\Security\Authenticator\Exception\InvalidStateAuthenticationException;
 use Markocupic\ContaoOAuth2Client\Security\Authenticator\Exception\NoAuthCodeAuthenticationException;
 use Markocupic\ContaoOAuth2Client\Security\Authenticator\Exception\NoContaoMemberFoundAuthenticationException;
@@ -34,6 +35,8 @@ use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\Session\SessionBagInterface;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Symfony\Component\Routing\RouterInterface;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\Exception\AuthenticationException;
 use Symfony\Component\Security\Http\Authenticator\AbstractAuthenticator;
@@ -55,6 +58,7 @@ class Authenticator extends AbstractAuthenticator
         private readonly ClientFactoryManager $clientFactoryManager,
         private readonly ContaoFramework $framework,
         private readonly EventDispatcherInterface $eventDispatcher,
+        private readonly RouterInterface $router,
         private readonly ScopeMatcher $scopeMatcher,
         private readonly TranslatorInterface $translator,
         private readonly LoggerInterface|null $contaoAccessLogger = null,
@@ -203,8 +207,17 @@ class Authenticator extends AbstractAuthenticator
         $sessionBag = $this->getSessionBag($request);
         $targetPath = $request->get('_target_path');
 
+        // Let's play it safe and make sure we always have a redirect URL.
         if ($this->scopeMatcher->isFrontendRequest($request) && $sessionBag->has('_failure_path')) {
             $targetPath = $sessionBag->get('_failure_path');
+        }
+
+        if (empty($targetPath)) {
+            if ($this->scopeMatcher->isBackendRequest($request)) {
+                $targetPath = $this->router->generate('contao_backend', [], UrlGeneratorInterface::ABSOLUTE_URL);
+            } else {
+                $targetPath = $request->getSchemeAndHttpHost();
+            }
         }
 
         $sessionBag->clear();
