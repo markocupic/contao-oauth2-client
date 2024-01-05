@@ -18,7 +18,6 @@ use Symfony\Component\Security\Core\Exception\AuthenticationException;
 
 class InvalidStateAuthenticationException extends AuthenticationException
 {
-
     public function getMessageKey(): string
     {
         return 'invalidStateAuth';

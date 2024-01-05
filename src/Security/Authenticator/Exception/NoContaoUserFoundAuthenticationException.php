@@ -18,7 +18,6 @@ use Symfony\Component\Security\Core\Exception\AuthenticationException;
 
 class NoContaoUserFoundAuthenticationException extends AuthenticationException
 {
-
     public function getMessageKey(): string
     {
         return 'noContaoUserFoundAuth';
