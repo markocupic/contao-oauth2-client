@@ -79,7 +79,7 @@ readonly class ParseBackendTemplateListener
         $i = 0;
 
         foreach ($this->clientFactoryManager->getAvailableClientsByFirewallName('contao_backend') as $clientFactory) {
-            if (!$clientFactory->getConfigByKey('enable_login')) {
+            if (!$clientFactory->isEnabled()) {
                 continue;
             }
 
@@ -170,7 +170,7 @@ readonly class ParseBackendTemplateListener
         $i = 0;
 
         foreach ($this->clientFactoryManager->getAvailableClientsByFirewallName('contao_backend') as $clientFactory) {
-            if (!$clientFactory->getConfigByKey('enable_login')) {
+            if (!$clientFactory->isEnabled()) {
                 continue;
             }
             ++$i;

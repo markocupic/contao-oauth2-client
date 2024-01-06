@@ -37,6 +37,15 @@ abstract class AbstractClientFactory implements ClientFactoryInterface
         return static::NAME;
     }
 
+    /**
+     * @return bool
+     * @throws \Exception
+     */
+    public function isEnabled(): bool
+    {
+        return $this->getConfigByKey('enable_login');
+    }
+
     public function getProviderType(): string
     {
         return static::PROVIDER;

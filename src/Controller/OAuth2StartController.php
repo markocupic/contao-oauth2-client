@@ -61,7 +61,10 @@ class OAuth2StartController extends AbstractController
 
         $clientName = $_oauth2_client;
 
-        if (!$this->isLoginActivated($clientName)) {
+        $clientFactory = $this->clientFactoryManager->getClientFactory($clientName);
+
+
+        if (!$clientFactory->isEnabled()) {
             return new JsonResponse(['message' => 'Bad Request: OAuth2Login is not activated.'], Response::HTTP_BAD_REQUEST);
         }
 
@@ -109,15 +112,5 @@ class OAuth2StartController extends AbstractController
         if (!$tokenManager->isTokenValid($token)) {
             throw new InvalidRequestTokenException('Invalid CSRF token. Please reload the page and try again.');
         }
-    }
-
-    /**
-     * @throws \Exception
-     */
-    private function isLoginActivated(string $clientName): bool
-    {
-        $clientFactory = $this->clientFactoryManager->getClientFactory($clientName);
-
-        return $clientFactory->getConfigByKey('enable_login');
     }
 }

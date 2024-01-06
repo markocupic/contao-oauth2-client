@@ -56,7 +56,7 @@ readonly class ClientFactoryManager
         $clientFactories = [];
 
         foreach ($this->getAvailableClientFactories() as $clientFactory) {
-            if ($clientFactory->getConfigByKey('enable_login')) {
+            if ($clientFactory->isEnabled()) {
                 $clientFactories[] = $clientFactory;
             }
         }

@@ -24,6 +24,8 @@ interface ClientFactoryInterface
 {
     public function getName(): string;
 
+    public function isEnabled(): bool;
+
     public function getProviderType(): string;
 
     public function getContaoFirewall(): string;

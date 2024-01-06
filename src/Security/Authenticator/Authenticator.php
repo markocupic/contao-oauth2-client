@@ -21,7 +21,6 @@ use Contao\MemberModel;
 use Contao\Message;
 use Contao\UserModel;
 use League\OAuth2\Client\Provider\Exception\IdentityProviderException;
-use Markocupic\ContaoOAuth2Client\Controller\OAuth2RedirectController;
 use Markocupic\ContaoOAuth2Client\Event\GetAccessTokenEvent;
 use Markocupic\ContaoOAuth2Client\OAuth2\Client\ClientFactoryManager;
 use Markocupic\ContaoOAuth2Client\Security\Authenticator\Exception\ClientNotActivatedAuthenticationException;
@@ -48,7 +47,6 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 
 class Authenticator extends AbstractAuthenticator
 {
-
     public function __construct(
         private readonly AuthenticationSuccessHandler $authenticationSuccessHandler,
         private readonly ClientFactoryManager $clientFactoryManager,
@@ -82,9 +80,19 @@ class Authenticator extends AbstractAuthenticator
         return true;
     }
 
+    /**
+     * @param Request $request
+     * @param string $clientName
+     * @param AuthenticationException|null $authException
+     * @return RedirectResponse|Response
+     */
     public function start(Request $request, string $clientName, AuthenticationException|null $authException = null): RedirectResponse|Response
     {
         $clientFactory = $this->clientFactoryManager->getClientFactory($clientName);
+
+        if(!$clientFactory->isEnabled()){
+            throw new ClientNotActivatedAuthenticationException('Authentication failed! Client not activated.');
+        }
         $client = $clientFactory->createClient();
 
         // Fetch the authorization URL from the provider;
@@ -116,7 +124,7 @@ class Authenticator extends AbstractAuthenticator
         $client = $clientFactory->createClient();
 
         try {
-            if (!$clientFactory->getConfigByKey('enable_login')) {
+            if (!$clientFactory->isEnabled()) {
                 throw new ClientNotActivatedAuthenticationException('Authentication failed! Client not activated.');
             }
 
