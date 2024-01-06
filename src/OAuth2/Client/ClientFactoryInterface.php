@@ -32,6 +32,8 @@ interface ClientFactoryInterface
 
     public function getConfigByKey(string $key): mixed;
 
+    public function getRedirectRoute(): string;
+
     public function createClient(array $options): AbstractProvider;
 
     public function getContaoUserFromResourceOwner(ResourceOwnerInterface $resourceOwner, string $key = 'email'): User|null;

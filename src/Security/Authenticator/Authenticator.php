@@ -48,10 +48,6 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 
 class Authenticator extends AbstractAuthenticator
 {
-    public const ALLOWED_ROUTES = [
-        'backend' => OAuth2RedirectController::LOGIN_ROUTE_BACKEND,
-        'frontend' => OAuth2RedirectController::LOGIN_ROUTE_FRONTEND,
-    ];
 
     public function __construct(
         private readonly AuthenticationSuccessHandler $authenticationSuccessHandler,
@@ -71,9 +67,15 @@ class Authenticator extends AbstractAuthenticator
             return false;
         }
 
-        $scope = $request->attributes->get('_scope');
+        $clientName = $request->attributes->get('_oauth2_client');
 
-        if ($request->attributes->get('_route') !== self::ALLOWED_ROUTES[$scope]) {
+        if (empty($clientName)) {
+            return false;
+        }
+
+        $clientFactory = $this->clientFactoryManager->getClientFactory($clientName);
+
+        if ($request->attributes->get('_route') !== $clientFactory->getRedirectRoute()) {
             return false;
         }
 
