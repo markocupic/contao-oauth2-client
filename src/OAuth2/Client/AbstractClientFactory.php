@@ -38,7 +38,6 @@ abstract class AbstractClientFactory implements ClientFactoryInterface
     }
 
     /**
-     * @return bool
      * @throws \Exception
      */
     public function isEnabled(): bool

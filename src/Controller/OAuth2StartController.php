@@ -63,7 +63,6 @@ class OAuth2StartController extends AbstractController
 
         $clientFactory = $this->clientFactoryManager->getClientFactory($clientName);
 
-
         if (!$clientFactory->isEnabled()) {
             return new JsonResponse(['message' => 'Bad Request: OAuth2Login is not activated.'], Response::HTTP_BAD_REQUEST);
         }

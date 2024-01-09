@@ -1,9 +1,11 @@
-.tl_login_form .formbody {
-    padding-top: 0;
-}
-
 .oauth-login-container {
     padding: 45px;
+}
+.oauth-login-container[data-contao-login="enabled"] {
+    padding-bottom: 0;
+}
+.oauth-login-container .tl_login_form .formbody {
+    padding-top: 0;
 }
 .oauth-login-container .formbody_oauth_buttons {
     padding: 8px 0;

@@ -1,13 +1,13 @@
-.tl_login_form .formbody {
-  padding-top: 0;
-}
-
 .oauth-login-container {
+
   padding: 45px;
-  @media (min-width: 1160px) {
-    & {
-      //padding-bottom: 0;
-    }
+
+  &[data-contao-login="enabled"] {
+    padding-bottom: 0;
+  }
+
+  .tl_login_form .formbody {
+    padding-top: 0;
   }
 
   .formbody_oauth_buttons {

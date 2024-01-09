@@ -71,23 +71,19 @@ readonly class ParseBackendTemplateListener
         $template['always_use_target_path'] = $this->getAlwaysUseTargetPath($strContent);
 
         // Count available & activated buttons
-        $countButtons = $this->countAvailableButtons();
+        $countButtons = $this->countAvailableAndEnabledClients();
 
         // Remove Contao Core backend login form markup if configured, and we have at least one button
         $blnDisableContaoCoreBackendLoginForm = $countButtons && $system->getContainer()->getParameter('markocupic_contao_oauth2_client.disable_contao_core_backend_login');
 
         $i = 0;
 
-        foreach ($this->clientFactoryManager->getAvailableClientsByFirewallName('contao_backend') as $clientFactory) {
-            if (!$clientFactory->isEnabled()) {
-                continue;
-            }
-
+        foreach ($this->clientFactoryManager->getAvailableClientsByFirewallName('contao_backend', true) as $clientFactory) {
             $clientName = $clientFactory->getName();
 
             ++$i;
 
-            // Generate & sign url to the start route
+            // Generate a signed url to the start route
             $template['url'] = $this->uriSigner->sign($this->router->generate(OAuth2StartController::LOGIN_ROUTE_BACKEND, ['_oauth2_client' => $clientName], UrlGeneratorInterface::ABSOLUTE_URL));
             $template['show_frontend_link'] = $countButtons === $i && $blnDisableContaoCoreBackendLoginForm;
 
@@ -98,12 +94,16 @@ readonly class ParseBackendTemplateListener
             $arrButtons[] = $this->twig->render('@MarkocupicContaoOAuth2Client/backend/component/_login_form.html.twig', $template);
         }
 
+        $hasOauthLogin = (bool) $countButtons;
+
         // Render the oauth button container template
         $strContainer = $this->twig->render(
             '@MarkocupicContaoOAuth2Client/backend/oauth_login_container.html.twig',
             [
+                'has_oauth_login' => $hasOauthLogin,
                 'login_forms' => implode('', $arrButtons),
-                'disable_contao_core_backend_login' => $blnDisableContaoCoreBackendLoginForm,
+                // The Contao Core backend login will not be hidden, if there is no OAuth2 login available
+                'disable_contao_core_backend_login' => $blnDisableContaoCoreBackendLoginForm && $hasOauthLogin,
             ]
         );
 
@@ -165,17 +165,8 @@ readonly class ParseBackendTemplateListener
     /**
      * @throws \Exception
      */
-    private function countAvailableButtons(): int
+    private function countAvailableAndEnabledClients(): int
     {
-        $i = 0;
-
-        foreach ($this->clientFactoryManager->getAvailableClientsByFirewallName('contao_backend') as $clientFactory) {
-            if (!$clientFactory->isEnabled()) {
-                continue;
-            }
-            ++$i;
-        }
-
-        return $i;
+        return \count($this->clientFactoryManager->getAvailableClientsByFirewallName('contao_backend', true));
     }
 }

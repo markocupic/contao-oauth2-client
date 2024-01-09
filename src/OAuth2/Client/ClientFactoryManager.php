@@ -41,7 +41,7 @@ readonly class ClientFactoryManager
     {
         $clientFactories = [];
 
-        foreach ($this->clientFactoryCollection->gtClientFactories() as $clientFactory) {
+        foreach ($this->clientFactoryCollection->getClientFactories() as $clientFactory) {
             $clientFactories[] = $clientFactory;
         }
 
@@ -69,7 +69,7 @@ readonly class ClientFactoryManager
      *
      * @return array<ClientFactoryInterface>
      */
-    public function getAvailableClientsByFirewallName(string $firewall): array
+    public function getAvailableClientsByFirewallName(string $firewall, bool $considerEnabledOnly = true): array
     {
         if (!\in_array($firewall, ['contao_backend', 'contao_frontend'], true)) {
             throw new \Exception(sprintf('Argument #1 contains an invalid firewall name (%s). Did you mean one of these "%s","%s"?', $firewall, 'contao_backend', 'contao_frontend'));
@@ -78,8 +78,12 @@ readonly class ClientFactoryManager
         $clientFactories = [];
 
         /** @var ClientFactoryInterface $clientFactory */
-        foreach ($this->clientFactoryCollection->gtClientFactories() as $clientFactory) {
+        foreach ($this->clientFactoryCollection->getClientFactories() as $clientFactory) {
             if ($clientFactory->getContaoFirewall() === $firewall) {
+                if ($considerEnabledOnly && !$clientFactory->isEnabled()) {
+                    continue;
+                }
+
                 $clientFactories[] = $clientFactory;
             }
         }
@@ -90,7 +94,7 @@ readonly class ClientFactoryManager
     private function getMatchingClientFactory(string $clientName): ClientFactoryInterface|null
     {
         /** @var ClientFactoryInterface $clientFactory */
-        foreach ($this->clientFactoryCollection->gtClientFactories() as $clientFactory) {
+        foreach ($this->clientFactoryCollection->getClientFactories() as $clientFactory) {
             if ($clientName === $clientFactory->getName()) {
                 return $clientFactory;
             }

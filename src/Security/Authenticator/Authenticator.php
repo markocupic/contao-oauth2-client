@@ -81,16 +81,13 @@ class Authenticator extends AbstractAuthenticator
     }
 
     /**
-     * @param Request $request
-     * @param string $clientName
      * @param AuthenticationException|null $authException
-     * @return RedirectResponse|Response
      */
     public function start(Request $request, string $clientName, AuthenticationException|null $authException = null): RedirectResponse|Response
     {
         $clientFactory = $this->clientFactoryManager->getClientFactory($clientName);
 
-        if(!$clientFactory->isEnabled()){
+        if (!$clientFactory->isEnabled()) {
             throw new ClientNotActivatedAuthenticationException('Authentication failed! Client not activated.');
         }
         $client = $clientFactory->createClient();
@@ -222,6 +219,10 @@ class Authenticator extends AbstractAuthenticator
             $targetPath = $sessionBag->get('_failure_path');
         }
 
+        if (\is_string($targetPath)) {
+            $targetPath = base64_decode($targetPath, true);
+        }
+
         if (empty($targetPath)) {
             if ($this->scopeMatcher->isBackendRequest($request)) {
                 $targetPath = $this->router->generate('contao_backend', [], UrlGeneratorInterface::ABSOLUTE_URL);
@@ -236,7 +237,7 @@ class Authenticator extends AbstractAuthenticator
 
         $request->getSession()->set(SecurityRequestAttributes::AUTHENTICATION_ERROR, $exception);
 
-        return new RedirectResponse(base64_decode($targetPath, true));
+        return new RedirectResponse($targetPath);
     }
 
     private function getSessionBag(Request $request): SessionBagInterface

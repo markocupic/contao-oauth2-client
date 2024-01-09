@@ -27,7 +27,7 @@ readonly final class ClientFactoryCollection
     /**
      * @return iterable<ClientFactoryInterface>
      */
-    public function gtClientFactories(): iterable
+    public function getClientFactories(): iterable
     {
         return $this->clientFactoryCollection;
     }

@@ -1,15 +1,17 @@
-{% block oauth_login_container %}
-    <div class="oauth-login-container" data-contao-login="{% if disable_contao_core_backend_login %}disabled{% else %}enabled{% endif %}">
-        <h1>{{ 'MSC.loginBT'|trans({}, 'contao_default') }}</h1>
+{% if has_oauth_login %}
+    {% block oauth_login_container %}
+        <div class="oauth-login-container" data-contao-login="{% if disable_contao_core_backend_login %}disabled{% else %}enabled{% endif %}">
+            <h1>{{ 'MSC.loginBT'|trans({}, 'contao_default') }}</h1>
 
-        {{ login_forms|default('')|raw }}
+            {{ login_forms|default('')|raw }}
 
-        {% if not disable_contao_core_backend_login %}
-            {% block login_btn_separator_container %}
-                <div class="login-btn-separator-container">
-                    <div class="login-btn-separator">{{ 'OAUTH_CLIENT_MSC.or'|trans({}, 'contao_default') }}</div>
-                </div>
-            {% endblock %}
-        {% endif %}
-    </div>
-{% endblock %}
+            {% if not disable_contao_core_backend_login and has_oauth_login %}
+                {% block login_btn_separator_container %}
+                    <div class="login-btn-separator-container">
+                        <div class="login-btn-separator">{{ 'OAUTH_CLIENT_MSC.or'|trans({}, 'contao_default') }}</div>
+                    </div>
+                {% endblock %}
+            {% endif %}
+        </div>
+    {% endblock %}
+{% endif %}
