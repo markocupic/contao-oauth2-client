@@ -25,6 +25,8 @@ use Markocupic\ContaoOAuth2Client\Controller\OAuth2RedirectController;
 
 abstract class AbstractClientFactory implements ClientFactoryInterface
 {
+    protected string $userIdentifier = 'email';
+
     protected array $config = [];
 
     public function __construct(
@@ -55,6 +57,11 @@ abstract class AbstractClientFactory implements ClientFactoryInterface
         return static::CONTAO_FIREWALL;
     }
 
+    public function getUserIdentifier(): string
+    {
+        return $this->userIdentifier;
+    }
+
     public function getConfig(): array
     {
         return $this->config;
@@ -77,19 +84,26 @@ abstract class AbstractClientFactory implements ClientFactoryInterface
         return 'contao_backend' === $this->getContaoFirewall() ? OAuth2RedirectController::LOGIN_ROUTE_BACKEND : OAuth2RedirectController::LOGIN_ROUTE_FRONTEND;
     }
 
-    public function getContaoUserFromResourceOwner(ResourceOwnerInterface $resourceOwner, string $key = 'email'): User|null
+    public function setUserIdentifier(string $userIdentifier): void
     {
-        $response = $resourceOwner->toArray();
+        $this->userIdentifier = $userIdentifier;
+    }
 
-        if (empty($response[$key])) {
+    public function createContaoUserFromResourceOwner(ResourceOwnerInterface $resourceOwner): User|null
+    {
+        $userIdentifier = $this->getUserIdentifier();
+
+        $payload = $resourceOwner->toArray();
+
+        if (empty($payload[$userIdentifier])) {
             return null;
         }
 
-        $value = $response[$key];
+        $userIdClaim = $payload[$userIdentifier];
 
         if ('contao_backend' === $this->getContaoFirewall()) {
             $userModel = $this->framework->getAdapter(UserModel::class);
-            $user = $userModel->findOneBy($key, $value);
+            $user = $userModel->findOneBy($userIdentifier, $userIdClaim);
 
             // Test if login as a backend user is permitted
             if ($user->disable || ('' !== $user->start && (int) $user->start > time()) || ('' !== $user->stop && (int) $user->stop < time())) {
@@ -97,7 +111,7 @@ abstract class AbstractClientFactory implements ClientFactoryInterface
             }
         } else {
             $memberModel = $this->framework->getAdapter(MemberModel::class);
-            $user = $memberModel->findOneBy($key, $value);
+            $user = $memberModel->findOneBy($userIdentifier, $userIdClaim);
 
             // Test if login as a frontend user is permitted
             if (!$user->login || $user->disable || ('' !== $user->start && (int) $user->start > time()) || ('' !== $user->stop && (int) $user->stop < time())) {

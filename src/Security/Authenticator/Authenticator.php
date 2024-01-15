@@ -146,7 +146,7 @@ class Authenticator extends AbstractAuthenticator
             $event = new GetAccessTokenEvent($accessToken, $request);
             $this->eventDispatcher->dispatch($event, GetAccessTokenEvent::NAME);
 
-            $contaoUser = $clientFactory->getContaoUserFromResourceOwner($resourceOwner);
+            $contaoUser = $clientFactory->createContaoUserFromResourceOwner($resourceOwner);
 
             if (null === $contaoUser) {
                 if ($this->scopeMatcher->isBackendRequest($request)) {
