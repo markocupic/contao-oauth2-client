@@ -166,7 +166,7 @@ class Authenticator extends AbstractAuthenticator
             $t = $userAdapter->getTable();
             $where = ["$t.username = ?"];
 
-            $contaoUser = $userAdapter->findBy($where, [$contaoUser->username]);
+            $contaoUser = $userAdapter->findOneBy($where, [$contaoUser->username]);
 
             if (null === $contaoUser) {
                 if ($this->scopeMatcher->isBackendRequest($request)) {
