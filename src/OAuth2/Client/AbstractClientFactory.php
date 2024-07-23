@@ -20,6 +20,9 @@ use Contao\FrontendUser;
 use Contao\MemberModel;
 use Contao\User;
 use Contao\UserModel;
+use Contao\Validator;
+use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\Types\Types;
 use League\OAuth2\Client\Provider\ResourceOwnerInterface;
 use Markocupic\ContaoOAuth2Client\Controller\OAuth2RedirectController;
 
@@ -31,6 +34,7 @@ abstract class AbstractClientFactory implements ClientFactoryInterface
 
     public function __construct(
         protected readonly ContaoFramework $framework,
+        protected readonly Connection $connection,
     ) {
     }
 
@@ -101,8 +105,23 @@ abstract class AbstractClientFactory implements ClientFactoryInterface
 
         $userIdClaim = $payload[$userIdentifier];
 
+        $validatorAdapter = $this->framework->getAdapter(Validator::class);
+
+        // Contao backend login
         if ('contao_backend' === $this->getContaoFirewall()) {
             $userModel = $this->framework->getAdapter(UserModel::class);
+
+            // email should not be treated case-insensitive
+            if ('email' === $userIdentifier && $validatorAdapter->isEmail($userIdClaim)) {
+                $email = $this->connection->fetchOne('SELECT email FROM tl_user WHERE email LIKE ?', [$userIdClaim], [Types::STRING]);
+
+                if (false === $email) {
+                    return null;
+                }
+
+                $userIdClaim = $email;
+            }
+
             $user = $userModel->findOneBy($userIdentifier, $userIdClaim);
 
             // Test if login as a backend user is permitted
@@ -110,7 +129,20 @@ abstract class AbstractClientFactory implements ClientFactoryInterface
                 return null;
             }
         } else {
+            // Contao frontend login
             $memberModel = $this->framework->getAdapter(MemberModel::class);
+
+            // email should not be treated case-insensitive
+            if ('email' === $userIdentifier && $validatorAdapter->isEmail($userIdClaim)) {
+                $email = $this->connection->fetchOne('SELECT email FROM tl_member WHERE email LIKE ?', [$userIdClaim], [Types::STRING]);
+
+                if (false === $email) {
+                    return null;
+                }
+
+                $userIdClaim = $email;
+            }
+
             $user = $memberModel->findOneBy($userIdentifier, $userIdClaim);
 
             // Test if login as a frontend user is permitted
