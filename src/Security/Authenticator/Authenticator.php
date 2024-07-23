@@ -55,6 +55,7 @@ class Authenticator extends AbstractAuthenticator
         private readonly RouterInterface $router,
         private readonly ScopeMatcher $scopeMatcher,
         private readonly TranslatorInterface $translator,
+        private readonly bool $isDebug,
         private readonly LoggerInterface|null $contaoAccessLogger = null,
     ) {
     }
@@ -90,7 +91,8 @@ class Authenticator extends AbstractAuthenticator
         if (!$clientFactory->isEnabled()) {
             throw new ClientNotActivatedAuthenticationException('Authentication failed! Client not activated.');
         }
-        $client = $clientFactory->createClient();
+
+        $client = $clientFactory->createClient($request);
 
         // Fetch the authorization URL from the provider;
         // this returns the urlAuthorize option and generates and applies any necessary parameters
@@ -118,7 +120,7 @@ class Authenticator extends AbstractAuthenticator
         $clientName = $request->attributes->get('_oauth2_client');
 
         $clientFactory = $this->clientFactoryManager->getClientFactory($clientName);
-        $client = $clientFactory->createClient();
+        $client = $clientFactory->createClient($request);
 
         try {
             if (!$clientFactory->isEnabled()) {
@@ -144,7 +146,7 @@ class Authenticator extends AbstractAuthenticator
             // Dispatch markocupic_contao_oauth2_client.get_access_token event
             // use a subscriber to e.g. generate missing Contao user
             $event = new GetAccessTokenEvent($accessToken, $request);
-            $this->eventDispatcher->dispatch($event, GetAccessTokenEvent::NAME);
+            $this->eventDispatcher->dispatch($event);
 
             $contaoUser = $clientFactory->createContaoUserFromResourceOwner($resourceOwner);
 
@@ -233,7 +235,15 @@ class Authenticator extends AbstractAuthenticator
 
         $sessionBag->clear();
 
+        // System log
         $this->contaoAccessLogger?->info($exception->getMessage());
+
+        $message = $this->framework->getAdapter(Message::class);
+
+        // Advice the user to check the Contao system log in debug mode.
+        if ($this->isDebug) {
+            $message->addError($this->translator->trans('OAUTH_CLIENT_ERR.pleaseCheckSystemLogToFindOutMore', [], 'contao_default'));
+        }
 
         $request->getSession()->set(SecurityRequestAttributes::AUTHENTICATION_ERROR, $exception);
 

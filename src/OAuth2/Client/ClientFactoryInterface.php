@@ -18,6 +18,7 @@ use Contao\User;
 use League\OAuth2\Client\Provider\AbstractProvider;
 use League\OAuth2\Client\Provider\ResourceOwnerInterface;
 use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
+use Symfony\Component\HttpFoundation\Request;
 
 #[AutoconfigureTag('contao_oauth2_client.client_factory')]
 interface ClientFactoryInterface
@@ -78,7 +79,7 @@ interface ClientFactoryInterface
     /**
      * Returns the provider object.
      */
-    public function createClient(array $options): AbstractProvider;
+    public function createClient(Request $request, array $options): AbstractProvider;
 
     /**
      * Returns the Contao Backend- or Frontend user from resource owner.

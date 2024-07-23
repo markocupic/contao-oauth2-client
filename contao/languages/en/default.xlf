@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xliff version="1.1">
+  <file datatype="php" original="vendor/markocupic/contao-oauth2-client/contao/languages/en/default.php" source-language="en">
+    <body>
+      <trans-unit id="OAUTH_CLIENT_MSC.or">
+        <source>or</source>
+      </trans-unit>
+      <trans-unit id="OAUTH_CLIENT_ERR.noContaoUserFoundAuth">
+        <source>Login attempt failed. You were not found in the user database.</source>
+      </trans-unit>
+      <trans-unit id="OAUTH_CLIENT_ERR.noContaoMemberFoundAuth">
+        <source>Login attempt failed. You were not found in the member database.</source>
+      </trans-unit>
+      <trans-unit id="OAUTH_CLIENT_ERR.identityProviderAuth">
+        <source>Login attempt failed. No access to the user data transmitted by the provider possible.</source>
+      </trans-unit>
+      <trans-unit id="OAUTH_CLIENT_ERR.unexpectedAuth">
+        <source>Login attempt failed. There has been an unexpected error.</source>
+      </trans-unit>
+      <trans-unit id="OAUTH_CLIENT_ERR.noAuthCodeAuth">
+        <source>Login attempt failed. Did you authorize our app?</source>
+      </trans-unit>
+      <trans-unit id="OAUTH_CLIENT_ERR.invalidStateAuth">
+        <source>Login attempt failed. Invalid state parameter passed in callback URL.</source>
+      </trans-unit>
+      <trans-unit id="OAUTH_CLIENT_ERR.clientNotActivatedAuth">
+        <source>Login attempt with the selected login provider failed. The client is not activated.</source>
+      </trans-unit>
+    </body>
+  </file>
+</xliff>

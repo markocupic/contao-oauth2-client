@@ -20,6 +20,7 @@ $GLOBALS['TL_LANG']['OAUTH_CLIENT_MSC']['or'] = 'or';
 /*
  * Errors
  */
+$GLOBALS['TL_LANG']['OAUTH_CLIENT_ERR']['pleaseCheckSystemLogToFindOutMore'] = 'Please check the Contao System Log to find out more about the failed login attempt.';
 $GLOBALS['TL_LANG']['OAUTH_CLIENT_ERR']['noContaoUserFoundAuth'] = 'Login attempt failed. You were not found in the user database.';
 $GLOBALS['TL_LANG']['OAUTH_CLIENT_ERR']['noContaoMemberFoundAuth'] = 'Login attempt failed. You were not found in the member database.';
 $GLOBALS['TL_LANG']['OAUTH_CLIENT_ERR']['identityProviderAuth'] = 'Login attempt failed. No access to the user data transmitted by the provider possible.';
