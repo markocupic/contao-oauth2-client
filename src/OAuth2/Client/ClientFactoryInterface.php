@@ -79,7 +79,7 @@ interface ClientFactoryInterface
     /**
      * Returns the provider object.
      */
-    public function createClient(Request $request, array $options): AbstractProvider;
+    public function createClient(Request $request, array $options = []): AbstractProvider;
 
     /**
      * Returns the Contao Backend- or Frontend user from resource owner.
