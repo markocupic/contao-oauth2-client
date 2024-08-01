@@ -14,9 +14,7 @@ declare(strict_types=1);
 
 namespace Markocupic\ContaoOAuth2Client\Security\Authenticator\Exception;
 
-use Symfony\Component\Security\Core\Exception\AuthenticationException;
-
-class InvalidStateAuthenticationException extends AuthenticationException
+class InvalidStateAuthenticationException extends AbstractAuthenticationException
 {
     public function getMessageKey(): string
     {

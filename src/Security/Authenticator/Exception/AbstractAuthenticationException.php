@@ -14,10 +14,8 @@ declare(strict_types=1);
 
 namespace Markocupic\ContaoOAuth2Client\Security\Authenticator\Exception;
 
-class ClientNotActivatedAuthenticationException extends AbstractAuthenticationException
-{
-    public function getMessageKey(): string
-    {
-        return 'clientNotActivatedAuth';
-    }
+use Symfony\Component\Security\Core\Exception\AuthenticationException;
+
+abstract class AbstractAuthenticationException extends AuthenticationException{
+
 }

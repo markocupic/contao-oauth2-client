@@ -22,6 +22,7 @@ use Contao\User;
 use League\OAuth2\Client\Provider\Exception\IdentityProviderException;
 use Markocupic\ContaoOAuth2Client\Event\GetAccessTokenEvent;
 use Markocupic\ContaoOAuth2Client\OAuth2\Client\ClientFactoryManager;
+use Markocupic\ContaoOAuth2Client\Security\Authenticator\Exception\AbstractAuthenticationException;
 use Markocupic\ContaoOAuth2Client\Security\Authenticator\Exception\ClientNotActivatedAuthenticationException;
 use Markocupic\ContaoOAuth2Client\Security\Authenticator\Exception\InvalidStateAuthenticationException;
 use Markocupic\ContaoOAuth2Client\Security\Authenticator\Exception\NoAuthCodeAuthenticationException;
@@ -159,7 +160,7 @@ class Authenticator extends AbstractAuthenticator
 
                 throw new NoContaoMemberFoundAuthenticationException('No matching Contao Frontend User found in the Database.');
             }
-        } catch (NoAuthCodeAuthenticationException|InvalidStateAuthenticationException|NoContaoUserFoundAuthenticationException|NoContaoMemberFoundAuthenticationException|IdentityProviderException $e) {
+        } catch (AbstractAuthenticationException|IdentityProviderException $e) {
             $messageKey = $e instanceof IdentityProviderException ? 'identityProviderAuth' : $e->getMessageKey();
 
             // Notify user

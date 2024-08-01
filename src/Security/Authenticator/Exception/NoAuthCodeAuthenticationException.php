@@ -14,9 +14,7 @@ declare(strict_types=1);
 
 namespace Markocupic\ContaoOAuth2Client\Security\Authenticator\Exception;
 
-use Symfony\Component\Security\Core\Exception\AuthenticationException;
-
-class NoAuthCodeAuthenticationException extends AuthenticationException
+class NoAuthCodeAuthenticationException extends AbstractAuthenticationException
 {
     public function getMessageKey(): string
     {
