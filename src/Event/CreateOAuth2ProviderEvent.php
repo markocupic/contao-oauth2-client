@@ -14,23 +14,17 @@ declare(strict_types=1);
 
 namespace Markocupic\ContaoOAuth2Client\Event;
 
-use League\OAuth2\Client\Token\AccessTokenInterface;
+use League\OAuth2\Client\Provider\AbstractProvider;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Contracts\EventDispatcher\Event;
 
-class GetAccessTokenEvent extends Event
+class CreateOAuth2ProviderEvent extends Event
 {
-    public const NAME = 'markocupic_contao_oauth2_client.get_access_token';
-
     public function __construct(
-        private readonly AccessTokenInterface $accessToken,
         private readonly Request $request,
+        private AbstractProvider $client,
+        private readonly array $options,
     ) {
-    }
-
-    public function getAccessToken(): AccessTokenInterface
-    {
-        return $this->accessToken;
     }
 
     public function getRequest(): Request
@@ -41,5 +35,20 @@ class GetAccessTokenEvent extends Event
     public function getContaoScope(): string
     {
         return $this->request->attributes->get('_scope');
+    }
+
+    public function getClient(): AbstractProvider
+    {
+        return $this->client;
+    }
+
+    public function setClient(AbstractProvider $client): void
+    {
+        $this->client = $client;
+    }
+
+    public function getOptions(): array
+    {
+        return $this->options;
     }
 }

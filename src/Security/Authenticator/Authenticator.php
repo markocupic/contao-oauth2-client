@@ -20,7 +20,7 @@ use Contao\CoreBundle\Security\Authentication\AuthenticationSuccessHandler;
 use Contao\Message;
 use Contao\User;
 use League\OAuth2\Client\Provider\Exception\IdentityProviderException;
-use Markocupic\ContaoOAuth2Client\Event\GetAccessTokenEvent;
+use Markocupic\ContaoOAuth2Client\Event\GetResourceOwnerEvent;
 use Markocupic\ContaoOAuth2Client\OAuth2\Client\ClientFactoryManager;
 use Markocupic\ContaoOAuth2Client\Security\Authenticator\Exception\AbstractAuthenticationException;
 use Markocupic\ContaoOAuth2Client\Security\Authenticator\Exception\ClientNotActivatedAuthenticationException;
@@ -119,7 +119,7 @@ class Authenticator extends AbstractAuthenticator
         $request->request->set('_target_path', $sessionBag->get('_target_path'));
         $request->request->set('_always_use_target_path', $sessionBag->get('_always_use_target_path'));
 
-        // Get the oauth2 client name from attributes
+        // Get the oauth2 client name from request
         $clientName = $request->attributes->get('_oauth2_client');
 
         $clientFactory = $this->clientFactoryManager->getClientFactory($clientName);
@@ -146,12 +146,11 @@ class Authenticator extends AbstractAuthenticator
             // Get the resource owner object.
             $resourceOwner = $client->getResourceOwner($accessToken);
 
-            // Dispatch markocupic_contao_oauth2_client.get_access_token event.
-            // Use a subscriber or event listener to e.g. create a missing Contao user
-            $event = new GetAccessTokenEvent($accessToken, $request);
+            // Write your own custom subscriber or event listener to e.g. create a missing Contao backend or frontend user.
+            $event = new GetResourceOwnerEvent($resourceOwner, $accessToken, $client, $request);
             $this->eventDispatcher->dispatch($event);
 
-            $user = $clientFactory->createContaoUserFromResourceOwner($resourceOwner);
+            $user = $clientFactory->createContaoUserFromResourceOwner($event->getResourceOwner());
 
             if (!$user instanceof User) {
                 if ($this->scopeMatcher->isBackendRequest($request)) {
