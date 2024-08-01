@@ -17,9 +17,8 @@ namespace Markocupic\ContaoOAuth2Client\Security\Authenticator;
 use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\CoreBundle\Routing\ScopeMatcher;
 use Contao\CoreBundle\Security\Authentication\AuthenticationSuccessHandler;
-use Contao\MemberModel;
 use Contao\Message;
-use Contao\UserModel;
+use Contao\User;
 use League\OAuth2\Client\Provider\Exception\IdentityProviderException;
 use Markocupic\ContaoOAuth2Client\Event\GetAccessTokenEvent;
 use Markocupic\ContaoOAuth2Client\OAuth2\Client\ClientFactoryManager;
@@ -143,14 +142,14 @@ class Authenticator extends AbstractAuthenticator
             // Get the resource owner object.
             $resourceOwner = $client->getResourceOwner($accessToken);
 
-            // Dispatch markocupic_contao_oauth2_client.get_access_token event
-            // use a subscriber to e.g. generate missing Contao user
+            // Dispatch markocupic_contao_oauth2_client.get_access_token event.
+            // Use a subscriber or event listener to e.g. create a missing Contao user
             $event = new GetAccessTokenEvent($accessToken, $request);
             $this->eventDispatcher->dispatch($event);
 
-            $contaoUser = $clientFactory->createContaoUserFromResourceOwner($resourceOwner);
+            $user = $clientFactory->createContaoUserFromResourceOwner($resourceOwner);
 
-            if (null === $contaoUser) {
+            if (!$user instanceof User) {
                 if ($this->scopeMatcher->isBackendRequest($request)) {
                     throw new NoContaoUserFoundAuthenticationException('No matching Contao Backend User found in the Database.');
                 }
@@ -158,32 +157,12 @@ class Authenticator extends AbstractAuthenticator
                 throw new NoContaoMemberFoundAuthenticationException('No matching Contao Frontend User found in the Database.');
             }
 
-            // The user exists and is not disabled. Get the correct Contao user model.
-            if ($this->scopeMatcher->isBackendRequest($request)) {
-                $userAdapter = $this->framework->getAdapter(UserModel::class);
-            } else {
-                $userAdapter = $this->framework->getAdapter(MemberModel::class);
-            }
-
-            $t = $userAdapter->getTable();
-            $where = ["$t.username = ?"];
-
-            $contaoUser = $userAdapter->findOneBy($where, [$contaoUser->username]);
-
-            if (null === $contaoUser) {
-                if ($this->scopeMatcher->isBackendRequest($request)) {
-                    throw new NoContaoUserFoundAuthenticationException('No matching Contao Backend User found in the Database.');
-                }
-
-                throw new NoContaoMemberFoundAuthenticationException('No matching Contao Frontend User found in the Database.');
-            }
         } catch (NoAuthCodeAuthenticationException|InvalidStateAuthenticationException|NoContaoUserFoundAuthenticationException|NoContaoMemberFoundAuthenticationException|IdentityProviderException $e) {
             $messageKey = $e instanceof IdentityProviderException ? 'identityProviderAuth' : $e->getMessageKey();
 
             // Notify user
             $message->addError($this->translator->trans('OAUTH_CLIENT_ERR.'.$messageKey, [], 'contao_default'));
 
-            // Log txt
             $errorLog = sprintf('OAuth Login with APP "%s" (%s) failed with code "%s".', $clientFactory->getName(), $clientFactory->getProviderType(), $messageKey);
 
             throw new AuthenticationException($errorLog);
@@ -191,13 +170,12 @@ class Authenticator extends AbstractAuthenticator
             // Notify user
             $message->addError($this->translator->trans('OAUTH_CLIENT_ERR.unexpectedAuth', [], 'contao_default'));
 
-            // Log txt
             $errorLog = sprintf('OAuth Login with APP "%s" (%s) failed with message "%s".', $clientFactory->getName(), $clientFactory->getProviderType(), $e->getMessage());
 
             throw new AuthenticationException($errorLog);
         }
 
-        return new SelfValidatingPassport(new UserBadge($contaoUser->username));
+        return new SelfValidatingPassport(new UserBadge($user->getUserIdentifier()));
     }
 
     public function onAuthenticationSuccess(Request $request, TokenInterface $token, $firewallName): Response|null
@@ -212,7 +190,7 @@ class Authenticator extends AbstractAuthenticator
     public function onAuthenticationFailure(Request $request, AuthenticationException $exception): Response|null
     {
         // Do not use Contao Core's onAuthenticationFailure handler
-        // because this leads to an endless redirection loop.
+        // because this leads to an infinite redirection loop.
         $sessionBag = $this->getSessionBag($request);
         $targetPath = $request->get('_target_path');
 
