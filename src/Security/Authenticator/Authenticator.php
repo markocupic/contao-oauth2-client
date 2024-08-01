@@ -28,6 +28,7 @@ use Markocupic\ContaoOAuth2Client\Security\Authenticator\Exception\NoAuthCodeAut
 use Markocupic\ContaoOAuth2Client\Security\Authenticator\Exception\NoContaoMemberFoundAuthenticationException;
 use Markocupic\ContaoOAuth2Client\Security\Authenticator\Exception\NoContaoUserFoundAuthenticationException;
 use Psr\Log\LoggerInterface;
+use Scheb\TwoFactorBundle\Security\Http\Authenticator\TwoFactorAuthenticator;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -46,6 +47,8 @@ use Symfony\Contracts\Translation\TranslatorInterface;
 
 class Authenticator extends AbstractAuthenticator
 {
+    public const NAME = 'CONTAO_OAUTH2_AUTHENTICATOR';
+
     public function __construct(
         private readonly AuthenticationSuccessHandler $authenticationSuccessHandler,
         private readonly ClientFactoryManager $clientFactoryManager,
@@ -156,7 +159,6 @@ class Authenticator extends AbstractAuthenticator
 
                 throw new NoContaoMemberFoundAuthenticationException('No matching Contao Frontend User found in the Database.');
             }
-
         } catch (NoAuthCodeAuthenticationException|InvalidStateAuthenticationException|NoContaoUserFoundAuthenticationException|NoContaoMemberFoundAuthenticationException|IdentityProviderException $e) {
             $messageKey = $e instanceof IdentityProviderException ? 'identityProviderAuth' : $e->getMessageKey();
 
@@ -226,6 +228,28 @@ class Authenticator extends AbstractAuthenticator
         $request->getSession()->set(SecurityRequestAttributes::AUTHENTICATION_ERROR, $exception);
 
         return new RedirectResponse($targetPath);
+    }
+
+    /**
+     * Bypass 2FA for this authenticator.
+     */
+    public function createToken(Passport $passport, string $firewallName): TokenInterface
+    {
+        $token = parent::createToken($passport, $firewallName);
+
+        $token->setAttribute('AUTHENTICATOR', self::NAME);
+
+        $user = $token->getUser();
+
+        if (!$user instanceof User) {
+            return $token;
+        }
+
+        if ($user->useTwoFactor) {
+            $token->setAttribute(TwoFactorAuthenticator::FLAG_2FA_COMPLETE, true);
+        }
+
+        return $token;
     }
 
     private function getSessionBag(Request $request): SessionBagInterface
