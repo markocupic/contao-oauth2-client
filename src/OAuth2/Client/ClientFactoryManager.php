@@ -16,7 +16,7 @@ namespace Markocupic\ContaoOAuth2Client\OAuth2\Client;
 
 use Markocupic\ContaoOAuth2Client\OAuth2\Client\Exception\ClientFactoryNotFoundException;
 
-readonly class ClientFactoryManager
+class ClientFactoryManager
 {
     public function __construct(
         private ClientFactoryCollection $clientFactoryCollection,

@@ -14,12 +14,14 @@ declare(strict_types=1);
 
 namespace Markocupic\ContaoOAuth2Client\ContaoManager;
 
+use Contao\CoreBundle\ContaoCoreBundle;
 use Contao\ManagerPlugin\Bundle\BundlePluginInterface;
 use Contao\ManagerPlugin\Bundle\Config\BundleConfig;
 use Contao\ManagerPlugin\Bundle\Parser\ParserInterface;
 use Contao\ManagerPlugin\Config\ContainerBuilder;
 use Contao\ManagerPlugin\Config\ExtensionPluginInterface;
 use Contao\ManagerPlugin\Routing\RoutingPluginInterface;
+use Markocupic\ContaoOAuth2Client\MarkocupicContaoOAuth2Client;
 use Markocupic\ContaoOAuth2Client\Security\Authenticator\Authenticator;
 use Symfony\Component\Config\Loader\LoaderResolverInterface;
 use Symfony\Component\HttpKernel\KernelInterface;
@@ -30,8 +32,8 @@ class Plugin implements BundlePluginInterface, RoutingPluginInterface, Extension
     public function getBundles(ParserInterface $parser): array
     {
         return [
-            BundleConfig::create('Markocupic\ContaoOAuth2Client\MarkocupicContaoOAuth2Client')
-                ->setLoadAfter(['Contao\CoreBundle\ContaoCoreBundle']),
+            BundleConfig::create(MarkocupicContaoOAuth2Client::class)
+                ->setLoadAfter([ContaoCoreBundle::class]),
         ];
     }
 

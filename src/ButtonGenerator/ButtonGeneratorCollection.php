@@ -14,7 +14,7 @@ declare(strict_types=1);
 
 namespace Markocupic\ContaoOAuth2Client\ButtonGenerator;
 
-readonly final class ButtonGeneratorCollection
+final class ButtonGeneratorCollection
 {
     /**
      * @param iterable<ButtonGeneratorInterface> $buttonGeneratorCollection

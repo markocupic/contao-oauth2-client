@@ -19,7 +19,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpKernel\Event\RequestEvent;
 use Symfony\Component\HttpKernel\KernelEvents;
 
-readonly class KernelRequestSubscriber implements EventSubscriberInterface
+class KernelRequestSubscriber implements EventSubscriberInterface
 {
     public function __construct(
         private ScopeMatcher $scopeMatcher,

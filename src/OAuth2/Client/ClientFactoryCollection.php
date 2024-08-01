@@ -14,7 +14,7 @@ declare(strict_types=1);
 
 namespace Markocupic\ContaoOAuth2Client\OAuth2\Client;
 
-readonly final class ClientFactoryCollection
+final class ClientFactoryCollection
 {
     /**
      * @param array<ClientFactoryInterface> $clientFactoryCollection

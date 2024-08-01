@@ -29,7 +29,7 @@ use Twig\Error\RuntimeError;
 use Twig\Error\SyntaxError;
 
 #[AsHook('parseBackendTemplate')]
-readonly class ParseBackendTemplateListener
+class ParseBackendTemplateListener
 {
     public function __construct(
         private ButtonGeneratorManager $buttonGeneratorManager,
@@ -58,7 +58,7 @@ readonly class ParseBackendTemplateListener
         $template = [];
         $arrButtons = [];
 
-        // Get request token (disabled by default)
+        // Get the request token (disabled by default)
         $template['request_token'] = '';
         $template['enable_csrf_token_check'] = false;
 

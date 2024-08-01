@@ -14,7 +14,7 @@ declare(strict_types=1);
 
 namespace Markocupic\ContaoOAuth2Client\ButtonGenerator;
 
-readonly final class ButtonGeneratorManager
+final class ButtonGeneratorManager
 {
     public function __construct(
         private ButtonGeneratorCollection $buttonGeneratorCollection,
