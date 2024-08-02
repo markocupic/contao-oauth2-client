@@ -97,9 +97,9 @@ class Authenticator extends AbstractAuthenticator
 
         $client = $clientFactory->createClient($request);
 
-        // Fetch the authorization URL from the provider;
-        // this returns the urlAuthorize option and generates and applies any necessary parameters
-        // (e.g. state).
+        // Call the /authorize endpoint from the provider.
+        // This returns the urlAuthorize option and generates and applies any necessary parameters
+        // (e.g. code, state, ...).
         $authorizationUrl = $client->getAuthorizationUrl();
 
         $sessionBag = $this->getSessionBag($request);
@@ -112,14 +112,14 @@ class Authenticator extends AbstractAuthenticator
     {
         $this->framework->initialize();
 
-        // Get the message adapter
+        // Get the message adapter.
         $message = $this->framework->getAdapter(Message::class);
 
         $sessionBag = $this->getSessionBag($request);
         $request->request->set('_target_path', $sessionBag->get('_target_path'));
         $request->request->set('_always_use_target_path', $sessionBag->get('_always_use_target_path'));
 
-        // Get the oauth2 client name from request
+        // Get the oauth2 client name from request.
         $clientName = $request->attributes->get('_oauth2_client');
 
         $clientFactory = $this->clientFactoryManager->getClientFactory($clientName);
@@ -138,15 +138,18 @@ class Authenticator extends AbstractAuthenticator
                 throw new InvalidStateAuthenticationException('Authentication failed! Invalid state parameter passed in callback URL.');
             }
 
-            // Try to get an access token using the authorization code grant.
+            // Call the /token endpoint and
+            // obtain an access token by presenting the authorization code grant.
             $accessToken = $client->getAccessToken('authorization_code', [
                 'code' => $request->query->get('code'),
             ]);
 
-            // Get the resource owner object.
+            // Call the /userinfo endpoint using the access token.
+            // This returns a JSON response (JWT) with claims about the currently authenticated end user.
             $resourceOwner = $client->getResourceOwner($accessToken);
 
-            // Write your own custom subscriber or event listener to e.g. create a missing Contao backend or frontend user.
+            // Write your own custom subscriber or event listener
+            // to e.g. create a missing Contao backend or frontend user.
             $event = new GetResourceOwnerEvent($resourceOwner, $accessToken, $client, $request);
             $this->eventDispatcher->dispatch($event);
 
@@ -162,14 +165,14 @@ class Authenticator extends AbstractAuthenticator
         } catch (AbstractAuthenticationException|IdentityProviderException $e) {
             $messageKey = $e instanceof IdentityProviderException ? 'identityProviderAuth' : $e->getMessageKey();
 
-            // Notify user
+            // Notify user.
             $message->addError($this->translator->trans('OAUTH_CLIENT_ERR.'.$messageKey, [], 'contao_default'));
 
             $errorLog = sprintf('OAuth Login with APP "%s" (%s) failed with code "%s".', $clientFactory->getName(), $clientFactory->getProviderType(), $messageKey);
 
             throw new AuthenticationException($errorLog);
         } catch (\Exception $e) {
-            // Notify user
+            // Notify user.
             $message->addError($this->translator->trans('OAUTH_CLIENT_ERR.unexpectedAuth', [], 'contao_default'));
 
             $errorLog = sprintf('OAuth Login with APP "%s" (%s) failed with message "%s".', $clientFactory->getName(), $clientFactory->getProviderType(), $e->getMessage());
@@ -192,7 +195,7 @@ class Authenticator extends AbstractAuthenticator
     public function onAuthenticationFailure(Request $request, AuthenticationException $exception): Response|null
     {
         // Do not use Contao Core's onAuthenticationFailure handler
-        // because this leads to an infinite redirection loop.
+        // because this leads to a redirection loop.
         $sessionBag = $this->getSessionBag($request);
         $targetPath = $request->get('_target_path');
 
@@ -215,7 +218,6 @@ class Authenticator extends AbstractAuthenticator
 
         $sessionBag->clear();
 
-        // System log
         $this->contaoAccessLogger?->info($exception->getMessage());
 
         $message = $this->framework->getAdapter(Message::class);
