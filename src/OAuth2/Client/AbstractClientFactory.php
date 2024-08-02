@@ -28,7 +28,16 @@ use Markocupic\ContaoOAuth2Client\Controller\OAuth2RedirectController;
 
 abstract class AbstractClientFactory implements ClientFactoryInterface
 {
-    protected string $userIdentifier = 'email';
+    /**
+     * Represents the key where the user identifier is stored
+     * in the claims of the token requested from the /userinfo endpoint.
+     */
+    protected string $identifierClaimKey = 'email';
+
+    /**
+     * tl_user.email or tl_member.email.
+     */
+    protected string $identifierContaoKey = 'email';
 
     protected array $config = [];
 
@@ -61,9 +70,14 @@ abstract class AbstractClientFactory implements ClientFactoryInterface
         return static::CONTAO_FIREWALL;
     }
 
-    public function getUserIdentifier(): string
+    public function getIdentifierClaimKey(): string
     {
-        return $this->userIdentifier;
+        return $this->identifierClaimKey;
+    }
+
+    public function getIdentifierContaoKey(): string
+    {
+        return $this->identifierContaoKey;
     }
 
     public function getConfig(): array
@@ -88,22 +102,25 @@ abstract class AbstractClientFactory implements ClientFactoryInterface
         return 'contao_backend' === $this->getContaoFirewall() ? OAuth2RedirectController::LOGIN_ROUTE_BACKEND : OAuth2RedirectController::LOGIN_ROUTE_FRONTEND;
     }
 
-    public function setUserIdentifier(string $userIdentifier): void
+    public function setIdentifierClaimKey(string $identifierClaimKey): void
     {
-        $this->userIdentifier = $userIdentifier;
+        $this->identifierClaimKey = $identifierClaimKey;
+    }
+
+    public function setIdentifierContaoKey(string $identifierContaoKey): void
+    {
+        $this->identifierContaoKey = $identifierContaoKey;
     }
 
     public function createContaoUserFromResourceOwner(ResourceOwnerInterface $resourceOwner): User|null
     {
-        $userIdentifier = $this->getUserIdentifier();
-
         $payload = $resourceOwner->toArray();
 
-        if (empty($payload[$userIdentifier])) {
+        if (empty($payload[$this->getIdentifierClaimKey()])) {
             return null;
         }
 
-        $userIdClaim = $payload[$userIdentifier];
+        $identifier = $payload[$this->getIdentifierClaimKey()];
 
         $validatorAdapter = $this->framework->getAdapter(Validator::class);
 
@@ -112,17 +129,17 @@ abstract class AbstractClientFactory implements ClientFactoryInterface
             $userModel = $this->framework->getAdapter(UserModel::class);
 
             // email should not be treated case-insensitive
-            if ('email' === $userIdentifier && $validatorAdapter->isEmail($userIdClaim)) {
-                $email = $this->connection->fetchOne('SELECT email FROM tl_user WHERE email LIKE ?', [$userIdClaim], [Types::STRING]);
+            if ('email' === $this->getIdentifierContaoKey() && $validatorAdapter->isEmail($identifier)) {
+                $email = $this->connection->fetchOne('SELECT email FROM tl_user WHERE email LIKE ?', [$identifier], [Types::STRING]);
 
                 if (false === $email) {
                     return null;
                 }
 
-                $userIdClaim = $email;
+                $identifier = $email;
             }
 
-            $user = $userModel->findOneBy($userIdentifier, $userIdClaim);
+            $user = $userModel->findOneBy($this->getIdentifierContaoKey(), $identifier);
 
             // Test if login as a backend user is permitted
             if ($user->disable || ('' !== $user->start && (int) $user->start > time()) || ('' !== $user->stop && (int) $user->stop < time())) {
@@ -133,17 +150,17 @@ abstract class AbstractClientFactory implements ClientFactoryInterface
             $memberModel = $this->framework->getAdapter(MemberModel::class);
 
             // email should not be treated case-insensitive
-            if ('email' === $userIdentifier && $validatorAdapter->isEmail($userIdClaim)) {
-                $email = $this->connection->fetchOne('SELECT email FROM tl_member WHERE email LIKE ?', [$userIdClaim], [Types::STRING]);
+            if ('email' === $this->getIdentifierContaoKey() && $validatorAdapter->isEmail($identifier)) {
+                $email = $this->connection->fetchOne('SELECT email FROM tl_member WHERE email LIKE ?', [$identifier], [Types::STRING]);
 
                 if (false === $email) {
                     return null;
                 }
 
-                $userIdClaim = $email;
+                $identifier = $email;
             }
 
-            $user = $memberModel->findOneBy($userIdentifier, $userIdClaim);
+            $user = $memberModel->findOneBy($this->getIdentifierContaoKey(), $identifier);
 
             // Test if login as a frontend user is permitted
             if (!$user->login || $user->disable || ('' !== $user->start && (int) $user->start > time()) || ('' !== $user->stop && (int) $user->stop < time())) {

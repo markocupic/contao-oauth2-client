@@ -46,9 +46,14 @@ interface ClientFactoryInterface
     public function getContaoFirewall(): string;
 
     /**
-     * Returns the field used as identifier to load a user from payload.
+     * Returns the key where the user identifier is stored in the payload of the user info token.
      */
-    public function getUserIdentifier(): string;
+    public function getIdentifierClaimKey(): string;
+
+    /**
+     * Returns the associated Contao field that is assigned to the user identifier claim from the payload of the user info token.
+     */
+    public function getIdentifierContaoKey(): string;
 
     /**
      * Returns the configuration array (Symfony Configuration).
@@ -72,9 +77,14 @@ interface ClientFactoryInterface
     public function getRedirectRoute(): string;
 
     /**
-     * Sets the field used as identifier to load a user from payload.
+     * Sets the key where the user identifier is stored in the payload of the user info token.
      */
-    public function setUserIdentifier(string $userIdentifier): void;
+    public function setIdentifierClaimKey(string $identifierClaimKey): void;
+
+    /**
+     * Sets the associated Contao field that is assigned to the user identifier claim from the payload of the user info token.
+     */
+    public function setIdentifierContaoKey(string $identifierContaoKey): void;
 
     /**
      * Returns the provider object.
