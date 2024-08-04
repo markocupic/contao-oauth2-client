@@ -30,6 +30,7 @@ use Markocupic\ContaoOAuth2Client\Security\Authenticator\Exception\NoContaoMembe
 use Markocupic\ContaoOAuth2Client\Security\Authenticator\Exception\NoContaoUserFoundAuthenticationException;
 use Psr\Log\LoggerInterface;
 use Scheb\TwoFactorBundle\Security\Http\Authenticator\TwoFactorAuthenticator;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -46,11 +47,12 @@ use Symfony\Component\Security\Http\Authenticator\Passport\SelfValidatingPasspor
 use Symfony\Component\Security\Http\SecurityRequestAttributes;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
-class Authenticator extends AbstractAuthenticator
+class OAuth2Authenticator extends AbstractAuthenticator
 {
     public const NAME = 'CONTAO_OAUTH2_AUTHENTICATOR';
 
     public function __construct(
+        #[Autowire(service: 'contao.security.authentication_success_handler')]
         private readonly AuthenticationSuccessHandler $authenticationSuccessHandler,
         private readonly ClientFactoryManager $clientFactoryManager,
         private readonly ContaoFramework $framework,
@@ -153,7 +155,7 @@ class Authenticator extends AbstractAuthenticator
             $event = new GetResourceOwnerEvent($resourceOwner, $accessToken, $client, $request);
             $this->eventDispatcher->dispatch($event);
 
-            $user = $clientFactory->createContaoUserFromResourceOwner($event->getResourceOwner());
+            $user = $clientFactory->getContaoUserFromResourceOwner($event->getResourceOwner());
 
             if (!$user instanceof User) {
                 if ($this->scopeMatcher->isBackendRequest($request)) {
@@ -196,26 +198,10 @@ class Authenticator extends AbstractAuthenticator
     {
         // Do not use Contao Core's onAuthenticationFailure handler
         // because this leads to a redirection loop.
+
+        $targetPath = $this->determineTargetPath($request);
+
         $sessionBag = $this->getSessionBag($request);
-        $targetPath = $request->get('_target_path');
-
-        // Let's play it safe and make sure we always have a redirect URL.
-        if ($this->scopeMatcher->isFrontendRequest($request) && $sessionBag->has('_failure_path')) {
-            $targetPath = $sessionBag->get('_failure_path');
-        }
-
-        if (\is_string($targetPath)) {
-            $targetPath = base64_decode($targetPath, true);
-        }
-
-        if (empty($targetPath)) {
-            if ($this->scopeMatcher->isBackendRequest($request)) {
-                $targetPath = $this->router->generate('contao_backend', [], UrlGeneratorInterface::ABSOLUTE_URL);
-            } else {
-                $targetPath = $request->getSchemeAndHttpHost();
-            }
-        }
-
         $sessionBag->clear();
 
         $this->contaoAccessLogger?->info($exception->getMessage());
@@ -252,6 +238,33 @@ class Authenticator extends AbstractAuthenticator
         }
 
         return $token;
+    }
+
+    private function determineTargetPath(Request $request): string
+    {
+        // Do not use Contao Core's onAuthenticationFailure handler
+        // because this leads to a redirection loop.
+        $sessionBag = $this->getSessionBag($request);
+        $targetPath = $request->get('_target_path');
+
+        // Let's play it safe and make sure we always have a redirect URL.
+        if ($this->scopeMatcher->isFrontendRequest($request) && $sessionBag->has('_failure_path')) {
+            $targetPath = $sessionBag->get('_failure_path');
+        }
+
+        if (\is_string($targetPath)) {
+            $targetPath = base64_decode($targetPath, true);
+        }
+
+        if (empty($targetPath)) {
+            if ($this->scopeMatcher->isBackendRequest($request)) {
+                $targetPath = $this->router->generate('contao_backend', [], UrlGeneratorInterface::ABSOLUTE_URL);
+            } else {
+                $targetPath = $request->getSchemeAndHttpHost();
+            }
+        }
+
+        return $targetPath;
     }
 
     private function getSessionBag(Request $request): SessionBagInterface

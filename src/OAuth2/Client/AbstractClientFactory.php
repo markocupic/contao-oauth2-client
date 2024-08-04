@@ -112,7 +112,7 @@ abstract class AbstractClientFactory implements ClientFactoryInterface
         $this->identifierContaoKey = $identifierContaoKey;
     }
 
-    public function createContaoUserFromResourceOwner(ResourceOwnerInterface $resourceOwner): User|null
+    public function getContaoUserFromResourceOwner(ResourceOwnerInterface $resourceOwner): User|null
     {
         $payload = $resourceOwner->toArray();
 

@@ -21,7 +21,7 @@
     },
     "require": {
         "php": "^8.2",
-        "contao/core-bundle": "^5.2",
+        "contao/core-bundle": "^5.3",
         "league/oauth2-client": "^2.7",
         "markocupic/contao-twig-assets": "^1.1",
         "symfony/config": "^6.4 || ^7.0",

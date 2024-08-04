@@ -14,12 +14,13 @@ declare(strict_types=1);
 
 namespace Markocupic\ContaoOAuth2Client\EventListener\Contao;
 
+use Contao\CoreBundle\Csrf\ContaoCsrfTokenManager;
 use Contao\CoreBundle\DependencyInjection\Attribute\AsHook;
-use Contao\CoreBundle\Framework\ContaoFramework;
-use Contao\System;
+use Contao\CoreBundle\InsertTag\InsertTagParser;
 use Markocupic\ContaoOAuth2Client\ButtonGenerator\ButtonGeneratorManager;
 use Markocupic\ContaoOAuth2Client\Controller\OAuth2StartController;
 use Markocupic\ContaoOAuth2Client\OAuth2\Client\ClientFactoryManager;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\UriSigner;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Routing\RouterInterface;
@@ -32,12 +33,17 @@ use Twig\Error\SyntaxError;
 class ParseBackendTemplateListener
 {
     public function __construct(
-        private ButtonGeneratorManager $buttonGeneratorManager,
-        private ClientFactoryManager $clientFactoryManager,
-        private ContaoFramework $framework,
-        private RouterInterface $router,
-        private Twig $twig,
-        private UriSigner $uriSigner,
+        private readonly ButtonGeneratorManager $buttonGeneratorManager,
+        private readonly ClientFactoryManager $clientFactoryManager,
+        private readonly ContaoCsrfTokenManager $csrfTokenManager,
+        private readonly RouterInterface $router,
+        private readonly Twig $twig,
+        private readonly UriSigner $uriSigner,
+        #[Autowire('%markocupic_contao_oauth2_client.disable_contao_core_backend_login%')]
+        private readonly bool $disableContaoBackendLogin,
+        #[Autowire('%markocupic_contao_oauth2_client.enable_csrf_token_check%')]
+        private readonly bool $enableCsrfTokenCheck,
+        private readonly InsertTagParser $insertTagParser,
     ) {
     }
 
@@ -52,9 +58,6 @@ class ParseBackendTemplateListener
             return $strContent;
         }
 
-        $system = $this->framework->getAdapter(System::class);
-        $container = $system->getContainer();
-
         $template = [];
         $arrButtons = [];
 
@@ -62,8 +65,8 @@ class ParseBackendTemplateListener
         $template['request_token'] = '';
         $template['enable_csrf_token_check'] = false;
 
-        if ($system->getContainer()->getParameter('markocupic_contao_oauth2_client.enable_csrf_token_check')) {
-            $template['request_token'] = $this->getRequestToken();
+        if ($this->enableCsrfTokenCheck) {
+            $template['request_token'] = $this->csrfTokenManager->getDefaultTokenValue();
             $template['enable_csrf_token_check'] = true;
         }
 
@@ -74,14 +77,14 @@ class ParseBackendTemplateListener
         $countButtons = $this->countAvailableAndEnabledClients();
 
         // Remove Contao Core backend login form markup if configured, and we have at least one button
-        $blnDisableContaoCoreBackendLoginForm = $countButtons && $system->getContainer()->getParameter('markocupic_contao_oauth2_client.disable_contao_core_backend_login');
+        $blnDisableContaoCoreBackendLoginForm = $countButtons && $this->disableContaoBackendLogin;
 
         $i = 0;
 
         foreach ($this->clientFactoryManager->getAvailableClientsByFirewallName('contao_backend', true) as $clientFactory) {
-            $clientName = $clientFactory->getName();
-
             ++$i;
+
+            $clientName = $clientFactory->getName();
 
             // Generate a signed url to the start route
             $template['url'] = $this->uriSigner->sign($this->router->generate(OAuth2StartController::LOGIN_ROUTE_BACKEND, ['_oauth2_client' => $clientName], UrlGeneratorInterface::ABSOLUTE_URL));
@@ -108,7 +111,7 @@ class ParseBackendTemplateListener
         );
 
         // Replace insert tags
-        $strContainer = $container->get('contao.insert_tag.parser')->replaceInline($strContainer);
+        $strContainer = $this->insertTagParser->replaceInline($strContainer);
 
         // Inject buttons in front of the Contao Core login form
         $strContent = str_replace('<form', $strContainer.'<form', $strContent);
@@ -122,18 +125,7 @@ class ParseBackendTemplateListener
         return str_replace("$('username').focus();", "if ($('username')){ \n\t\t$('username').focus();\n\t  }", $strContent);
     }
 
-    private function getRequestToken(): string
-    {
-        $system = $this->framework->getAdapter(System::class);
-        $container = $system->getContainer();
-        $tokenName = $container->getParameter('contao.csrf_token_name');
 
-        if (null === $tokenName) {
-            return '';
-        }
-
-        return $container->get('contao.csrf.token_manager')->getToken($tokenName)->getValue();
-    }
 
     private function getTargetPath(string $strContent): string
     {

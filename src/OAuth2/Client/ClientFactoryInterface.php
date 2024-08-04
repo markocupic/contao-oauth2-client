@@ -94,5 +94,5 @@ interface ClientFactoryInterface
     /**
      * Returns the Contao Backend- or Frontend user from resource owner.
      */
-    public function createContaoUserFromResourceOwner(ResourceOwnerInterface $resourceOwner): User|null;
+    public function getContaoUserFromResourceOwner(ResourceOwnerInterface $resourceOwner): User|null;
 }

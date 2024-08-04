@@ -4,7 +4,6 @@ services:
         autoconfigure: true
         public: false
         bind:
-            $authenticationSuccessHandler: '@contao.security.authentication_success_handler'
             $isDebug: '%kernel.debug%'
 
     Markocupic\ContaoOAuth2Client\:

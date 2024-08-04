@@ -20,8 +20,9 @@ use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\CoreBundle\Routing\ScopeMatcher;
 use Contao\System;
 use Markocupic\ContaoOAuth2Client\OAuth2\Client\ClientFactoryManager;
-use Markocupic\ContaoOAuth2Client\Security\Authenticator\Authenticator;
+use Markocupic\ContaoOAuth2Client\Security\Authenticator\OAuth2Authenticator;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -40,13 +41,16 @@ class OAuth2StartController extends AbstractController
     public const LOGIN_ROUTE_FRONTEND = 'markocupic_contao_oauth2_client_frontend_login';
 
     public function __construct(
-        private readonly Authenticator $authenticator,
+        #[Autowire('%markocupic_contao_oauth2_client.enable_csrf_token_check%')]
+        private bool $enableCsrfTokenCheck,
         private readonly ClientFactoryManager $clientFactoryManager,
         private readonly ContaoCsrfTokenManager $tokenManager,
-        private readonly ContaoFramework $framework,
+        private readonly OAuth2Authenticator $authenticator,
         private readonly RouterInterface $router,
         private readonly ScopeMatcher $scopeMatcher,
         private readonly UriSigner $uriSigner,
+        #[Autowire('%contao.csrf_token_name%')]
+        private readonly string|null $defaultTokenName = null,
     ) {
     }
 
@@ -64,15 +68,12 @@ class OAuth2StartController extends AbstractController
         $clientFactory = $this->clientFactoryManager->getClientFactory($clientName);
 
         if (!$clientFactory->isEnabled()) {
-            return new JsonResponse(['message' => 'Bad Request: OAuth2Login is not activated.'], Response::HTTP_BAD_REQUEST);
+            return new JsonResponse(['message' => 'Bad Request: OAuth2Login is not enabled.'], Response::HTTP_BAD_REQUEST);
         }
 
-        $system = $this->framework->getAdapter(System::class);
-
         // Check CSRF token
-        if ($system->getContainer()->getParameter('markocupic_contao_oauth2_client.enable_csrf_token_check')) {
-            $csrfTokenName = $system->getContainer()->getParameter('contao.csrf_token_name');
-            $this->validateCsrfToken($request->get('REQUEST_TOKEN'), $this->tokenManager, $csrfTokenName);
+        if ($this->defaultTokenName && $this->enableCsrfTokenCheck) {
+            $this->validateCsrfToken($request->get('REQUEST_TOKEN'), $this->tokenManager, $this->defaultTokenName);
         }
 
         if ($this->scopeMatcher->isBackendRequest($request)) {

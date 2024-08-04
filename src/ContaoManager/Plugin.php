@@ -22,7 +22,7 @@ use Contao\ManagerPlugin\Config\ContainerBuilder;
 use Contao\ManagerPlugin\Config\ExtensionPluginInterface;
 use Contao\ManagerPlugin\Routing\RoutingPluginInterface;
 use Markocupic\ContaoOAuth2Client\MarkocupicContaoOAuth2Client;
-use Markocupic\ContaoOAuth2Client\Security\Authenticator\Authenticator;
+use Markocupic\ContaoOAuth2Client\Security\Authenticator\OAuth2Authenticator;
 use Symfony\Component\Config\Loader\LoaderResolverInterface;
 use Symfony\Component\HttpKernel\KernelInterface;
 use Symfony\Component\Routing\RouteCollection;
@@ -58,11 +58,11 @@ class Plugin implements BundlePluginInterface, RoutingPluginInterface, Extension
 
         foreach ($extensionConfigs as &$extensionConfig) {
             if (isset($extensionConfig['firewalls'], $extensionConfig['firewalls']['contao_frontend'])) {
-                $extensionConfig['firewalls']['contao_frontend']['custom_authenticators'][] = Authenticator::class;
+                $extensionConfig['firewalls']['contao_frontend']['custom_authenticators'][] = OAuth2Authenticator::class;
             }
 
             if (isset($extensionConfig['firewalls'], $extensionConfig['firewalls']['contao_backend'])) {
-                $extensionConfig['firewalls']['contao_backend']['custom_authenticators'][] = Authenticator::class;
+                $extensionConfig['firewalls']['contao_backend']['custom_authenticators'][] = OAuth2Authenticator::class;
             }
         }
 
