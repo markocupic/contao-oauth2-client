@@ -22,6 +22,7 @@ use Contao\User;
 use League\OAuth2\Client\Provider\Exception\IdentityProviderException;
 use Markocupic\ContaoOAuth2Client\Event\GetResourceOwnerEvent;
 use Markocupic\ContaoOAuth2Client\OAuth2\Client\ClientFactoryManager;
+use Markocupic\ContaoOAuth2Client\OAuth2\Token\TokenHandlerManager;
 use Markocupic\ContaoOAuth2Client\Security\Authenticator\Exception\AbstractAuthenticationException;
 use Markocupic\ContaoOAuth2Client\Security\Authenticator\Exception\ClientNotActivatedAuthenticationException;
 use Markocupic\ContaoOAuth2Client\Security\Authenticator\Exception\InvalidStateAuthenticationException;
@@ -59,6 +60,7 @@ class OAuth2Authenticator extends AbstractAuthenticator
         private readonly EventDispatcherInterface $eventDispatcher,
         private readonly RouterInterface $router,
         private readonly ScopeMatcher $scopeMatcher,
+        private readonly TokenHandlerManager $tokenHandlerManager,
         private readonly TranslatorInterface $translator,
         private readonly bool $isDebug,
         private readonly LoggerInterface|null $contaoAccessLogger = null,
@@ -125,6 +127,7 @@ class OAuth2Authenticator extends AbstractAuthenticator
         $clientName = $request->attributes->get('_oauth2_client');
 
         $clientFactory = $this->clientFactoryManager->getClientFactory($clientName);
+        $firewallName = $clientFactory->getContaoFirewall();
         $client = $clientFactory->createClient($request);
 
         try {
@@ -155,7 +158,9 @@ class OAuth2Authenticator extends AbstractAuthenticator
             $event = new GetResourceOwnerEvent($resourceOwner, $accessToken, $client, $request);
             $this->eventDispatcher->dispatch($event);
 
-            $user = $clientFactory->getContaoUserFromResourceOwner($event->getResourceOwner());
+            // Extract the Contao user from token (claims)
+            $tokenHandler = $this->tokenHandlerManager->getTokenHandler($clientName);
+            $user = $tokenHandler->getUserFromResourceOwner($resourceOwner, $firewallName);
 
             if (!$user instanceof User) {
                 if ($this->scopeMatcher->isBackendRequest($request)) {

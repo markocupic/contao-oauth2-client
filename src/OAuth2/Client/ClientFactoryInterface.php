@@ -14,9 +14,7 @@ declare(strict_types=1);
 
 namespace Markocupic\ContaoOAuth2Client\OAuth2\Client;
 
-use Contao\User;
 use League\OAuth2\Client\Provider\AbstractProvider;
-use League\OAuth2\Client\Provider\ResourceOwnerInterface;
 use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
 use Symfony\Component\HttpFoundation\Request;
 
@@ -46,16 +44,6 @@ interface ClientFactoryInterface
     public function getContaoFirewall(): string;
 
     /**
-     * Returns the key where the user identifier is stored in the payload of the user info token.
-     */
-    public function getIdentifierClaimKey(): string;
-
-    /**
-     * Returns the associated Contao field that is assigned to the user identifier claim from the payload of the user info token.
-     */
-    public function getIdentifierContaoKey(): string;
-
-    /**
      * Returns the configuration array (Symfony Configuration).
      * Array(
      *   'enable_login' => 1,
@@ -77,22 +65,7 @@ interface ClientFactoryInterface
     public function getRedirectRoute(): string;
 
     /**
-     * Sets the key where the user identifier is stored in the payload of the user info token.
-     */
-    public function setIdentifierClaimKey(string $identifierClaimKey): void;
-
-    /**
-     * Sets the associated Contao field that is assigned to the user identifier claim from the payload of the user info token.
-     */
-    public function setIdentifierContaoKey(string $identifierContaoKey): void;
-
-    /**
      * Returns the provider object.
      */
     public function createClient(Request $request, array $options = []): AbstractProvider;
-
-    /**
-     * Returns the Contao Backend- or Frontend user from resource owner.
-     */
-    public function getContaoUserFromResourceOwner(ResourceOwnerInterface $resourceOwner): User|null;
 }

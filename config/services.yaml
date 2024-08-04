@@ -20,6 +20,10 @@ services:
         arguments:
             - !tagged_iterator contao_oauth2_client.client_factory
 
+    Markocupic\ContaoOAuth2Client\OAuth2\Token\TokenHandlerCollection:
+        arguments:
+            - !tagged_iterator contao_oauth2_client.token_handler
+
     # Add a session bag
     markocupic.contao_oauth2_client.session.factory:
         class: Markocupic\ContaoOAuth2Client\Session\SessionFactory
