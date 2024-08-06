@@ -183,6 +183,9 @@ class OAuth2Authenticator extends AbstractAuthenticator
 
                 throw new NoContaoMemberFoundAuthenticationException('No matching Contao Frontend User found in the Database.');
             }
+
+            return new SelfValidatingPassport(new UserBadge($user->getUserIdentifier()));
+
         } catch (AbstractAuthenticationException|IdentityProviderException $e) {
             $messageKey = $e instanceof IdentityProviderException ? 'identityProviderAuth' : $e->getMessageKey();
 
@@ -200,8 +203,6 @@ class OAuth2Authenticator extends AbstractAuthenticator
 
             throw new AuthenticationException($errorLog);
         }
-
-        return new SelfValidatingPassport(new UserBadge($user->getUserIdentifier()));
     }
 
     public function onAuthenticationSuccess(Request $request, TokenInterface $token, $firewallName): Response|null
