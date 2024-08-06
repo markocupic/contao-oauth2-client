@@ -109,6 +109,13 @@ class OAuth2Authenticator extends AbstractAuthenticator
         $sessionBag = $this->getSessionBag($request);
         $sessionBag->set('oauth2state', $client->getState());
 
+        // PKCE support: Store the PKCE code after the `getAuthorizationUrl()` call.
+        $pkceCode = $client->getPkceCode();
+
+        if (!empty($pkceCode)) {
+            $sessionBag->set('pkceCode', $pkceCode);
+        }
+
         return new RedirectResponse($authorizationUrl);
     }
 
@@ -141,6 +148,13 @@ class OAuth2Authenticator extends AbstractAuthenticator
 
             if (empty($request->query->get('state')) || empty($this->getSessionBag($request)->get('oauth2state')) || $request->query->get('state') !== $this->getSessionBag($request)->get('oauth2state')) {
                 throw new InvalidStateAuthenticationException('Authentication failed! Invalid state parameter passed in callback URL.');
+            }
+
+            // PKCE support: Restore the PKCE code before the `getAccessToken()` call.
+            $pkceCode = $sessionBag->get('pkceCode');
+
+            if (!empty($pkceCode)) {
+                $client->setPkceCode($pkceCode);
             }
 
             // Call the /token endpoint and
