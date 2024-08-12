@@ -20,6 +20,7 @@ use Contao\CoreBundle\Security\Authentication\AuthenticationSuccessHandler;
 use Contao\Message;
 use Contao\User;
 use League\OAuth2\Client\Provider\Exception\IdentityProviderException;
+use Markocupic\ContaoOAuth2Client\Event\GetAccessTokenEvent;
 use Markocupic\ContaoOAuth2Client\Event\GetResourceOwnerEvent;
 use Markocupic\ContaoOAuth2Client\OAuth2\Client\ClientFactoryManager;
 use Markocupic\ContaoOAuth2Client\OAuth2\Token\TokenHandlerManager;
@@ -142,6 +143,10 @@ class OAuth2Authenticator extends AbstractAuthenticator
                 throw new ClientNotActivatedAuthenticationException('Authentication failed! Client not activated.');
             }
 
+            // Write your own access token handler
+            $event = new GetAccessTokenEvent($client, $request);
+            $this->eventDispatcher->dispatch($event);
+
             if (empty($request->query->get('code'))) {
                 throw new NoAuthCodeAuthenticationException('Authentication failed! Did you authorize our app?');
             }
@@ -185,7 +190,6 @@ class OAuth2Authenticator extends AbstractAuthenticator
             }
 
             return new SelfValidatingPassport(new UserBadge($user->getUserIdentifier()));
-
         } catch (AbstractAuthenticationException|IdentityProviderException $e) {
             $messageKey = $e instanceof IdentityProviderException ? 'identityProviderAuth' : $e->getMessageKey();
 
