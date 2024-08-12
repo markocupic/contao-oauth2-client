@@ -144,8 +144,14 @@ class OAuth2Authenticator extends AbstractAuthenticator
             }
 
             // Write your own access token handler
+            // and return a self validating passport
+            // to log in a Contao user.
             $event = new GetAccessTokenEvent($client, $request);
             $this->eventDispatcher->dispatch($event);
+
+            if ($event->hasSelfValidatingPassport()) {
+                return $event->getSelfValidatingPassport();
+            }
 
             if (empty($request->query->get('code'))) {
                 throw new NoAuthCodeAuthenticationException('Authentication failed! Did you authorize our app?');
