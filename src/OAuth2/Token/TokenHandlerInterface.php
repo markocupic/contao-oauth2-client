@@ -26,5 +26,5 @@ interface TokenHandlerInterface
      */
     public function supports(): array;
 
-    public function getUserFromResourceOwner(ResourceOwnerInterface $resourceOwner, string $firewall): null|User;
+    public function getUserFromResourceOwner(ResourceOwnerInterface $resourceOwner, string $firewall): User|null;
 }

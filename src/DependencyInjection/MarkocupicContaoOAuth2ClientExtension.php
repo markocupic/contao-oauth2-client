@@ -46,7 +46,7 @@ class MarkocupicContaoOAuth2ClientExtension extends Extension
         $loader->load('services.yaml');
 
         $rootKey = $this->getAlias();
-        
+
         $container->setParameter($rootKey.'.disable_contao_core_backend_login', $config['disable_contao_core_backend_login']);
         $container->setParameter($rootKey.'.enable_csrf_token_check', $config['enable_csrf_token_check']);
     }

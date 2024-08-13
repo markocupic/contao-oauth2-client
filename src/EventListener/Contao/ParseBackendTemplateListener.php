@@ -125,8 +125,6 @@ class ParseBackendTemplateListener
         return str_replace("$('username').focus();", "if ($('username')){ \n\t\t$('username').focus();\n\t  }", $strContent);
     }
 
-
-
     private function getTargetPath(string $strContent): string
     {
         $targetPath = '';

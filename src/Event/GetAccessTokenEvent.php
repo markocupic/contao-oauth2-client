@@ -21,7 +21,7 @@ use Symfony\Contracts\EventDispatcher\Event;
 
 class GetAccessTokenEvent extends Event
 {
-    protected null|SelfValidatingPassport $selfValidatingPassport = null;
+    protected SelfValidatingPassport|null $selfValidatingPassport = null;
 
     public function __construct(
         private readonly AbstractProvider $client,
@@ -31,10 +31,10 @@ class GetAccessTokenEvent extends Event
 
     public function hasSelfValidatingPassport(): bool
     {
-        return $this->selfValidatingPassport !== null;
+        return null !== $this->selfValidatingPassport;
     }
 
-    public function getSelfValidatingPassport(): ?SelfValidatingPassport
+    public function getSelfValidatingPassport(): SelfValidatingPassport|null
     {
         return $this->selfValidatingPassport;
     }

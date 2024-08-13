@@ -28,14 +28,14 @@ use League\OAuth2\Client\Provider\ResourceOwnerInterface;
 final class DefaultTokenHandler implements TokenHandlerInterface
 {
     /**
-     * The claim where the user identifier is stored
+     * The claim where the user identifier is stored.
      */
-    protected string $claim = 'email';
+    private string $claim = 'email';
 
     /**
      * tl_user.email or tl_member.email.
      */
-    protected string $contaoIdentifierFieldName = 'email';
+    private string $contaoIdentifierFieldName = 'email';
 
     public function __construct(
         protected readonly ContaoFramework $framework,
@@ -70,7 +70,7 @@ final class DefaultTokenHandler implements TokenHandlerInterface
         if ('contao_backend' === $firewall) {
             $userModel = $this->framework->getAdapter(UserModel::class);
 
-            // email should not be treated case-insensitive
+            // email should not be treated case-sensitive
             if ('email' === $this->getContaoIdentifierFieldName() && $validatorAdapter->isEmail($identifier)) {
                 $email = $this->connection->fetchOne('SELECT email FROM tl_user WHERE email LIKE ?', [$identifier], [Types::STRING]);
 
@@ -91,7 +91,7 @@ final class DefaultTokenHandler implements TokenHandlerInterface
             // Contao frontend login
             $memberModel = $this->framework->getAdapter(MemberModel::class);
 
-            // email should not be treated case-insensitive
+            // email should not be treated case-sensitive
             if ('email' === $this->getContaoIdentifierFieldName() && $validatorAdapter->isEmail($identifier)) {
                 $email = $this->connection->fetchOne('SELECT email FROM tl_member WHERE email LIKE ?', [$identifier], [Types::STRING]);
 
@@ -125,12 +125,12 @@ final class DefaultTokenHandler implements TokenHandlerInterface
         return $user;
     }
 
-    protected function getClaim(): string
+    private function getClaim(): string
     {
         return $this->claim;
     }
 
-    protected function getContaoIdentifierFieldName(): string
+    private function getContaoIdentifierFieldName(): string
     {
         return $this->contaoIdentifierFieldName;
     }

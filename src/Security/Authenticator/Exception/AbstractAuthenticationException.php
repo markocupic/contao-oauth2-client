@@ -16,6 +16,6 @@ namespace Markocupic\ContaoOAuth2Client\Security\Authenticator\Exception;
 
 use Symfony\Component\Security\Core\Exception\AuthenticationException;
 
-abstract class AbstractAuthenticationException extends AuthenticationException{
-
+abstract class AbstractAuthenticationException extends AuthenticationException
+{
 }

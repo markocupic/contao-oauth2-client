@@ -90,7 +90,10 @@ class OAuth2Authenticator extends AbstractAuthenticator
     }
 
     /**
+     * @param Request $request
+     * @param string $clientName
      * @param AuthenticationException|null $authException
+     * @return RedirectResponse|Response
      */
     public function start(Request $request, string $clientName, AuthenticationException|null $authException = null): RedirectResponse|Response
     {
@@ -199,14 +202,14 @@ class OAuth2Authenticator extends AbstractAuthenticator
         } catch (AbstractAuthenticationException|IdentityProviderException $e) {
             $messageKey = $e instanceof IdentityProviderException ? 'identityProviderAuth' : $e->getMessageKey();
 
-            // Notify user.
+            // Notify the user about the failed login attempt.
             $message->addError($this->translator->trans('OAUTH_CLIENT_ERR.'.$messageKey, [], 'contao_default'));
 
             $errorLog = sprintf('OAuth Login with APP "%s" (%s) failed with code "%s".', $clientFactory->getName(), $clientFactory->getProviderType(), $messageKey);
 
             throw new AuthenticationException($errorLog);
         } catch (\Exception $e) {
-            // Notify user.
+            // Notify the user about the failed login attempt.
             $message->addError($this->translator->trans('OAUTH_CLIENT_ERR.unexpectedAuth', [], 'contao_default'));
 
             $errorLog = sprintf('OAuth Login with APP "%s" (%s) failed with message "%s".', $clientFactory->getName(), $clientFactory->getProviderType(), $e->getMessage());

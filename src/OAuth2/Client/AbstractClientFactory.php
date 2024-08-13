@@ -20,7 +20,6 @@ use Markocupic\ContaoOAuth2Client\Controller\OAuth2RedirectController;
 
 abstract class AbstractClientFactory implements ClientFactoryInterface
 {
-
     protected array $config = [];
 
     public function __construct(
@@ -73,6 +72,4 @@ abstract class AbstractClientFactory implements ClientFactoryInterface
     {
         return 'contao_backend' === $this->getContaoFirewall() ? OAuth2RedirectController::LOGIN_ROUTE_BACKEND : OAuth2RedirectController::LOGIN_ROUTE_FRONTEND;
     }
-
-
 }

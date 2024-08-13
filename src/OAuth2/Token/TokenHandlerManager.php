@@ -25,14 +25,14 @@ class TokenHandlerManager
     {
         /** @var TokenHandlerInterface $tokenHandler */
         foreach ($this->tokenHandlerCollection->getTokenHandlers() as $tokenHandler) {
-            if (in_array($clientName, $tokenHandler->supports())) {
+            if (\in_array($clientName, $tokenHandler->supports(), true)) {
                 return $tokenHandler;
             }
         }
 
         /** @var TokenHandlerInterface $tokenHandler */
         foreach ($this->tokenHandlerCollection->getTokenHandlers() as $tokenHandler) {
-            if (in_array('default', $tokenHandler->supports())) {
+            if (\in_array('default', $tokenHandler->supports(), true)) {
                 return $tokenHandler;
             }
         }
