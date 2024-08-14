@@ -20,6 +20,7 @@ use Contao\CoreBundle\Security\Authentication\AuthenticationSuccessHandler;
 use Contao\Message;
 use Contao\User;
 use League\OAuth2\Client\Provider\Exception\IdentityProviderException;
+use Markocupic\ContaoOAuth2Client\Event\BeforeAuthorizationRequestEvent;
 use Markocupic\ContaoOAuth2Client\Event\GetAccessTokenEvent;
 use Markocupic\ContaoOAuth2Client\Event\GetResourceOwnerEvent;
 use Markocupic\ContaoOAuth2Client\OAuth2\Client\ClientFactoryManager;
@@ -90,10 +91,7 @@ class OAuth2Authenticator extends AbstractAuthenticator
     }
 
     /**
-     * @param Request $request
-     * @param string $clientName
      * @param AuthenticationException|null $authException
-     * @return RedirectResponse|Response
      */
     public function start(Request $request, string $clientName, AuthenticationException|null $authException = null): RedirectResponse|Response
     {
@@ -120,7 +118,13 @@ class OAuth2Authenticator extends AbstractAuthenticator
             $sessionBag->set('pkceCode', $pkceCode);
         }
 
-        return new RedirectResponse($authorizationUrl);
+        // Use an event listener to e.g.
+        // write the state to the database if there is no session,
+        // or use it to modify the authorization url.
+        $event = new BeforeAuthorizationRequestEvent($request, $client, $authorizationUrl);
+        $this->eventDispatcher->dispatch($event);
+
+        return new RedirectResponse($event->getAuthorizationUrl());
     }
 
     public function authenticate(Request $request): Passport
