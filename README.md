@@ -3,6 +3,8 @@
 # Contao OAuth2 Client
 This extension serves as a base plugin for OAuth2 Login Bundles like [contao-github-login](https://github.com/markocupic/contao-github-login) or  [contao-azure-login](https://github.com/markocupic/contao-azure-login) and contains a backend and frontend authenticator.
 
+<video src="docs/demo.mp4" width="300"/>
+
 # Follow these steps to create your custom oauth2-login plugin.
 * Create a bundle and name it `vendorname/contao-***-login`
 * In your composer require 'markocupic/contao-oauth2-client', the OAuth base extension `league/oauth2-github` an e.g. `league/oauth2-client`.
