@@ -1,0 +1,34 @@
+{
+    "name": "contao-oauth2-client",
+    "repository": {
+        "type": "git",
+        "url": "git+github.com/markocupic/contao-oauth2-client"
+    },
+    "scripts": {
+        "build": "encore production"
+    },
+    "license": "MIT",
+    "dependencies": {
+        "dexie": "^4.0",
+        "vue": "^3.5"
+    },
+    "devDependencies": {
+        "@babel/preset-env": "^7.0",
+        "@symfony/webpack-encore": "^5.0",
+        "autoprefixer": "^10.2",
+        "core-js": "^3.15",
+        "file-loader": "^6.0",
+        "postcss-loader": "^8.0"
+    },
+    "browserslist": [
+        "defaults"
+    ],
+    "description": "![Marko Cupic, Contao developer since 2007](docs/logo.png?raw=true \"logo\")",
+    "version": "1.0.0",
+    "main": "postcss.config.js",
+    "directories": {
+        "doc": "docs",
+        "test": "tests"
+    },
+    "author": "Marko Cupic"
+}

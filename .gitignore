@@ -7,3 +7,7 @@
 /composer.lock
 /.php-cs-fixer.cache
 /tools/phpunit/.phpunit.result.cache
+
+# npm
+/node_modules/
+/package-lock.json

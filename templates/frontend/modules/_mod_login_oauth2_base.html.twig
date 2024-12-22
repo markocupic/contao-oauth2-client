@@ -1,8 +1,15 @@
 <!-- indexer::stop -->
 {% block mod_oauth_login_frontend %}
     {% block oauth_login_frontend_scripts %}
-        {% do addJavascriptResource('bundles/markocupiccontaooauth2client/js/login_button_animation.js|static') %}
-        {% do addCssResource('bundles/markocupiccontaooauth2client/css/login_button.css|static') %}
+        {# Add the stylesheet #}
+        {% add to head %}
+            <link rel="stylesheet" href="{{ asset('css/login_button.css', 'markocupic_contao_o_auth2_client') }}">
+        {% endadd %}
+
+        {# Add the script #}
+        {% add to body %}
+            <script src="{{ asset('js/login_button_animation.js', 'markocupic_contao_o_auth2_client') }}"></script>
+        {% endadd %}
     {% endblock %}
 
     {% block oauth_login_frontend_headline %}

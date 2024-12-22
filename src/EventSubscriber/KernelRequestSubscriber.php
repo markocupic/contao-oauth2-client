@@ -15,20 +15,24 @@ declare(strict_types=1);
 namespace Markocupic\ContaoOAuth2Client\EventSubscriber;
 
 use Contao\CoreBundle\Routing\ScopeMatcher;
+use Symfony\Component\Asset\Packages;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpKernel\Event\RequestEvent;
 use Symfony\Component\HttpKernel\KernelEvents;
 
 class KernelRequestSubscriber implements EventSubscriberInterface
 {
+    public const PRIORITY = -100;
+
     public function __construct(
-        private ScopeMatcher $scopeMatcher,
+        private readonly Packages $packages,
+        private readonly ScopeMatcher $scopeMatcher,
     ) {
     }
 
     public static function getSubscribedEvents(): array
     {
-        return [KernelEvents::REQUEST => 'loadAssets'];
+        return [KernelEvents::REQUEST => ['loadAssets', self::PRIORITY]];
     }
 
     public function loadAssets(RequestEvent $e): void
@@ -37,9 +41,9 @@ class KernelRequestSubscriber implements EventSubscriberInterface
 
         if ($this->scopeMatcher->isBackendRequest($request)) {
             if ('contao_backend_login' === $request->attributes->get('_route')) {
-                $GLOBALS['TL_CSS'][] = 'bundles/markocupiccontaooauth2client/css/login_button.css|static';
-                $GLOBALS['TL_CSS'][] = 'bundles/markocupiccontaooauth2client/css/backend.css|static';
-                $GLOBALS['TL_JAVASCRIPT'][] = 'bundles/markocupiccontaooauth2client/js/login_button_animation.js|static';
+                $GLOBALS['TL_CSS'][] = $this->packages->getUrl('css/login_button.css', 'markocupic_contao_o_auth2_client');
+                $GLOBALS['TL_CSS'][] = $this->packages->getUrl('css/backend.css', 'markocupic_contao_o_auth2_client');
+                $GLOBALS['TL_JAVASCRIPT'][] = $this->packages->getUrl('js/login_button_animation.js', 'markocupic_contao_o_auth2_client');
             }
         }
     }
