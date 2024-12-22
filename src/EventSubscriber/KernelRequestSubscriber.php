@@ -41,9 +41,13 @@ class KernelRequestSubscriber implements EventSubscriberInterface
 
         if ($this->scopeMatcher->isBackendRequest($request)) {
             if ('contao_backend_login' === $request->attributes->get('_route')) {
-                $GLOBALS['TL_CSS'][] = $this->packages->getUrl('css/login_button.css', 'markocupic_contao_o_auth2_client');
-                $GLOBALS['TL_CSS'][] = $this->packages->getUrl('css/backend.css', 'markocupic_contao_o_auth2_client');
-                $GLOBALS['TL_JAVASCRIPT'][] = $this->packages->getUrl('js/login_button_animation.js', 'markocupic_contao_o_auth2_client');
+                // Setting the markocupic_contao_oauth2_client::disable_backend_assets request attribute
+                // will stop loading the backend assets.
+                if (!$request->attributes->has('markocupic_contao_oauth2_client::disable_backend_assets')) {
+                    $GLOBALS['TL_CSS'][] = $this->packages->getUrl('css/login_button.css', 'markocupic_contao_o_auth2_client');
+                    $GLOBALS['TL_CSS'][] = $this->packages->getUrl('css/backend.css', 'markocupic_contao_o_auth2_client');
+                    $GLOBALS['TL_JAVASCRIPT'][] = $this->packages->getUrl('js/login_button_animation.js', 'markocupic_contao_o_auth2_client');
+                }
             }
         }
     }
