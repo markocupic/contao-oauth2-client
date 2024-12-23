@@ -18,6 +18,7 @@ use Contao\CoreBundle\Csrf\ContaoCsrfTokenManager;
 use Contao\CoreBundle\Exception\InvalidRequestTokenException;
 use Contao\CoreBundle\Routing\ScopeMatcher;
 use Markocupic\ContaoOAuth2Client\OAuth2\Client\ClientFactoryManager;
+use Markocupic\ContaoOAuth2Client\Security\Authenticator\OAuth2Authenticator;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -46,7 +47,7 @@ class OAuth2StartController extends AbstractController
         private readonly ContaoCsrfTokenManager $tokenManager,
         // The custom authenticator has to be autowired and should not be type hinted explicitly
         // (See: https://github.com/symfony/symfony/issues/59091#issuecomment-2539293444)
-        #[Autowire(service: 'Markocupic\ContaoOAuth2Client\Security\Authenticator\OAuth2Authenticator')]
+        #[Autowire(service: OAuth2Authenticator::class)]
         private readonly AuthenticatorInterface $authenticator,
         private readonly RouterInterface $router,
         private readonly ScopeMatcher $scopeMatcher,
