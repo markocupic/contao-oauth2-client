@@ -18,7 +18,7 @@ use Contao\CoreBundle\Csrf\ContaoCsrfTokenManager;
 use Contao\CoreBundle\DependencyInjection\Attribute\AsHook;
 use Contao\CoreBundle\InsertTag\InsertTagParser;
 use Markocupic\ContaoOAuth2Client\ButtonGenerator\ButtonGeneratorManager;
-use Markocupic\ContaoOAuth2Client\Controller\OAuth2StartController;
+use Markocupic\ContaoOAuth2Client\Controller\StartController;
 use Markocupic\ContaoOAuth2Client\OAuth2\Client\ClientFactoryManager;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\UriSigner;
@@ -87,7 +87,7 @@ class ParseBackendTemplateListener
             $clientName = $clientFactory->getName();
 
             // Generate a signed url to the start route
-            $template['url'] = $this->uriSigner->sign($this->router->generate(OAuth2StartController::LOGIN_ROUTE_BACKEND, ['_oauth2_client' => $clientName], UrlGeneratorInterface::ABSOLUTE_URL));
+            $template['url'] = $this->uriSigner->sign($this->router->generate(StartController::LOGIN_ROUTE_BACKEND, ['_oauth2_client' => $clientName], UrlGeneratorInterface::ABSOLUTE_URL));
             $template['show_frontend_link'] = $countButtons === $i && $blnDisableContaoCoreBackendLoginForm;
 
             // Render the button template

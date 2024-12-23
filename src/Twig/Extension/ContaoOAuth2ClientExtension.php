@@ -14,7 +14,7 @@ declare(strict_types=1);
 
 namespace Markocupic\ContaoOAuth2Client\Twig\Extension;
 
-use Markocupic\ContaoOAuth2Client\Controller\OAuth2StartController;
+use Markocupic\ContaoOAuth2Client\Controller\StartController;
 use Markocupic\ContaoOAuth2Client\OAuth2\Client\ClientFactoryManager;
 use Symfony\Component\HttpFoundation\UriSigner;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
@@ -41,7 +41,7 @@ class ContaoOAuth2ClientExtension extends AbstractExtension
     public function generateStartUrlFor(string $clientName): string
     {
         $clientFactory = $this->clientFactoryManager->getClientFactory($clientName);
-        $route = 'contao_backend' === $clientFactory->getContaoFirewall() ? OAuth2StartController::LOGIN_ROUTE_BACKEND : OAuth2StartController::LOGIN_ROUTE_FRONTEND;
+        $route = 'contao_backend' === $clientFactory->getContaoFirewall() ? StartController::LOGIN_ROUTE_BACKEND : StartController::LOGIN_ROUTE_FRONTEND;
 
         return $this->uriSigner->sign($this->router->generate($route, ['_oauth2_client' => $clientName], UrlGeneratorInterface::ABSOLUTE_URL));
     }

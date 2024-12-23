@@ -21,7 +21,7 @@ use Symfony\Component\Routing\Annotation\Route;
 
 #[Route('/_oauth2_login/{_oauth2_client}/backend', name: self::LOGIN_ROUTE_BACKEND, defaults: ['_scope' => 'backend'])]
 #[Route('/_oauth2_login/{_oauth2_client}/frontend', name: self::LOGIN_ROUTE_FRONTEND, defaults: ['_scope' => 'frontend'])]
-class OAuth2RedirectController extends AbstractController
+class RedirectController extends AbstractController
 {
     public const LOGIN_ROUTE_BACKEND = 'markocupic_contao_oauth2_client_redirect_backend';
     public const LOGIN_ROUTE_FRONTEND = 'markocupic_contao_oauth2_client_redirect_frontend';

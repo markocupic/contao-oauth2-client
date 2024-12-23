@@ -35,7 +35,7 @@ use Symfony\Component\Security\Http\Authenticator\AuthenticatorInterface;
 
 #[Route('/_start_oauth2_login/{_oauth2_client}/backend', name: self::LOGIN_ROUTE_BACKEND, defaults: ['_scope' => 'backend', '_token_check' => false])]
 #[Route('/_start_oauth2_login/{_oauth2_client}/frontend', name: self::LOGIN_ROUTE_FRONTEND, defaults: ['_scope' => 'frontend', '_token_check' => false])]
-class OAuth2StartController extends AbstractController
+class StartController extends AbstractController
 {
     public const LOGIN_ROUTE_BACKEND = 'markocupic_contao_oauth2_client_backend_login';
     public const LOGIN_ROUTE_FRONTEND = 'markocupic_contao_oauth2_client_frontend_login';
