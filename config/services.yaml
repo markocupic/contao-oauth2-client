@@ -3,8 +3,6 @@ services:
         autowire: true
         autoconfigure: true
         public: false
-        bind:
-            $isDebug: '%kernel.debug%'
 
     Markocupic\ContaoOAuth2Client\:
         resource: ../src/

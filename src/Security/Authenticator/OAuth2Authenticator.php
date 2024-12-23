@@ -17,7 +17,6 @@ namespace Markocupic\ContaoOAuth2Client\Security\Authenticator;
 use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\CoreBundle\Routing\ScopeMatcher;
 use Contao\CoreBundle\Security\Authentication\AuthenticationSuccessHandler;
-use Contao\Message;
 use Contao\User;
 use League\OAuth2\Client\Provider\Exception\IdentityProviderException;
 use Markocupic\ContaoOAuth2Client\Event\BeforeAuthorizationRequestEvent;
@@ -25,13 +24,13 @@ use Markocupic\ContaoOAuth2Client\Event\GetAccessTokenEvent;
 use Markocupic\ContaoOAuth2Client\Event\GetResourceOwnerEvent;
 use Markocupic\ContaoOAuth2Client\OAuth2\Client\ClientFactoryManager;
 use Markocupic\ContaoOAuth2Client\OAuth2\Token\TokenHandlerManager;
+use Markocupic\ContaoOAuth2Client\Security\Authentication\AuthenticationFailureHandler;
 use Markocupic\ContaoOAuth2Client\Security\Authenticator\Exception\AbstractAuthenticationException;
 use Markocupic\ContaoOAuth2Client\Security\Authenticator\Exception\ClientNotActivatedAuthenticationException;
 use Markocupic\ContaoOAuth2Client\Security\Authenticator\Exception\InvalidStateAuthenticationException;
 use Markocupic\ContaoOAuth2Client\Security\Authenticator\Exception\NoAuthCodeAuthenticationException;
 use Markocupic\ContaoOAuth2Client\Security\Authenticator\Exception\NoContaoMemberFoundAuthenticationException;
 use Markocupic\ContaoOAuth2Client\Security\Authenticator\Exception\NoContaoUserFoundAuthenticationException;
-use Psr\Log\LoggerInterface;
 use Scheb\TwoFactorBundle\Security\Http\Authenticator\TwoFactorAuthenticator;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
@@ -39,32 +38,25 @@ use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\Session\SessionBagInterface;
-use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
-use Symfony\Component\Routing\RouterInterface;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\Exception\AuthenticationException;
 use Symfony\Component\Security\Http\Authenticator\AbstractAuthenticator;
 use Symfony\Component\Security\Http\Authenticator\Passport\Passport;
 use Symfony\Component\Security\Http\Authenticator\Passport\SelfValidatingPassport;
-use Symfony\Component\Security\Http\SecurityRequestAttributes;
-use Symfony\Contracts\Translation\TranslatorInterface;
 
 class OAuth2Authenticator extends AbstractAuthenticator
 {
     public const NAME = 'CONTAO_OAUTH2_AUTHENTICATOR';
 
     public function __construct(
+        private readonly AuthenticationFailureHandler $authenticationFailureHandler,
         #[Autowire(service: 'contao.security.authentication_success_handler')]
         private readonly AuthenticationSuccessHandler $authenticationSuccessHandler,
         private readonly ClientFactoryManager $clientFactoryManager,
         private readonly ContaoFramework $framework,
         private readonly EventDispatcherInterface $eventDispatcher,
-        private readonly RouterInterface $router,
         private readonly ScopeMatcher $scopeMatcher,
         private readonly TokenHandlerManager $tokenHandlerManager,
-        private readonly TranslatorInterface $translator,
-        private readonly bool $isDebug,
-        private readonly LoggerInterface|null $contaoAccessLogger = null,
     ) {
     }
 
@@ -89,6 +81,12 @@ class OAuth2Authenticator extends AbstractAuthenticator
         return true;
     }
 
+    /**
+     * Call the /authorize endpoint from the identity provider.
+     * This returns the urlAuthorize option
+     * and generates and applies any necessary parameters
+     * (e.g. code, state, ...).
+     */
     public function authorize(Request $request): RedirectResponse|Response
     {
         $clientName = $request->attributes->get('markocupic_contao_oauth2_client::client_name');
@@ -101,9 +99,6 @@ class OAuth2Authenticator extends AbstractAuthenticator
 
         $client = $clientFactory->createClient($request);
 
-        // Call the /authorize endpoint from the identity provider.
-        // This returns the urlAuthorize option and generates and applies any necessary parameters
-        // (e.g. code, state, ...).
         $authorizationUrl = $client->getAuthorizationUrl();
 
         $sessionBag = $this->getSessionBag($request);
@@ -129,9 +124,6 @@ class OAuth2Authenticator extends AbstractAuthenticator
     {
         $this->framework->initialize();
 
-        // Get the message adapter.
-        $message = $this->framework->getAdapter(Message::class);
-
         // Restore the state
         $sessionBag = $this->getSessionBag($request);
         $request->request->set('_target_path', $sessionBag->get('_target_path'));
@@ -149,9 +141,10 @@ class OAuth2Authenticator extends AbstractAuthenticator
                 throw new ClientNotActivatedAuthenticationException('Authentication failed! Client not activated.');
             }
 
-            // Write your own access token handler
-            // and return a self validating passport
-            // to log in a Contao user.
+            // At your own risk, you can skip the oidc flow here
+            // and let your custom access token handler
+            // return a self validating passport
+            // to log in Contao users.
             $event = new GetAccessTokenEvent($client, $request);
             $this->eventDispatcher->dispatch($event);
 
@@ -160,11 +153,11 @@ class OAuth2Authenticator extends AbstractAuthenticator
             }
 
             if (empty($request->query->get('code'))) {
-                throw new NoAuthCodeAuthenticationException('Authentication failed! Did you authorize our app?');
+                throw new NoAuthCodeAuthenticationException('No auth code parameter found in callback URL.');
             }
 
-            if (empty($request->query->get('state')) || empty($this->getSessionBag($request)->get('oauth2state')) || $request->query->get('state') !== $this->getSessionBag($request)->get('oauth2state')) {
-                throw new InvalidStateAuthenticationException('Authentication failed! Invalid state parameter passed in callback URL.');
+            if (!$this->checkState($request)) {
+                throw new InvalidStateAuthenticationException('Invalid state parameter passed in callback URL.');
             }
 
             // PKCE support: Restore the PKCE code before the `getAccessToken()` call.
@@ -181,7 +174,8 @@ class OAuth2Authenticator extends AbstractAuthenticator
             ]);
 
             // Call the /userinfo endpoint using the access token.
-            // This returns a JSON response (JWT) with claims about the currently authenticated end user.
+            // This returns a JSON response (JWT) with claims
+            // about the currently authenticated end user.
             $resourceOwner = $client->getResourceOwner($accessToken);
 
             // Write your own custom subscriber or event listener
@@ -202,22 +196,14 @@ class OAuth2Authenticator extends AbstractAuthenticator
             }
 
             return new SelfValidatingPassport($userBadge);
-        } catch (AbstractAuthenticationException|IdentityProviderException $e) {
-            $messageKey = $e instanceof IdentityProviderException ? 'identityProviderAuth' : $e->getMessageKey();
-
-            // Notify the user about the failed login attempt.
-            $message->addError($this->translator->trans('OAUTH_CLIENT_ERR.'.$messageKey, [], 'contao_default'));
-
-            $errorLog = sprintf('OAuth Login with APP "%s" (%s) failed with code "%s".', $clientFactory->getName(), $clientFactory->getProviderType(), $messageKey);
-
-            throw new AuthenticationException($errorLog);
         } catch (\Exception $e) {
-            // Notify the user about the failed login attempt.
-            $message->addError($this->translator->trans('OAUTH_CLIENT_ERR.unexpectedAuth', [], 'contao_default'));
+            $error = match (true) {
+                $e instanceof AbstractAuthenticationException => sprintf('OAuth Login with APP "%s" (%s) failed with code "%s".', $clientFactory->getName(), $clientFactory->getProviderType(), $e->getMessageKey()),
+                $e instanceof IdentityProviderException => sprintf('OAuth Login with APP "%s" (%s) failed with code "%s".', $clientFactory->getName(), $clientFactory->getProviderType(), 'identityProviderAuth'),
+                default => sprintf('OAuth Login with APP "%s" (%s) failed with error "%s".', $clientFactory->getName(), $clientFactory->getProviderType(), $e->getMessage()),
+            };
 
-            $errorLog = sprintf('OAuth Login with APP "%s" (%s) failed with message "%s".', $clientFactory->getName(), $clientFactory->getProviderType(), $e->getMessage());
-
-            throw new AuthenticationException($errorLog);
+            throw new AuthenticationException($error);
         }
     }
 
@@ -232,26 +218,7 @@ class OAuth2Authenticator extends AbstractAuthenticator
 
     public function onAuthenticationFailure(Request $request, AuthenticationException $exception): Response|null
     {
-        // Do not use Contao Core's onAuthenticationFailure handler
-        // because this leads to a redirection loop.
-
-        $targetPath = $this->determineTargetPath($request);
-
-        $sessionBag = $this->getSessionBag($request);
-        $sessionBag->clear();
-
-        $this->contaoAccessLogger?->info($exception->getMessage());
-
-        $message = $this->framework->getAdapter(Message::class);
-
-        // Advice the user to check the Contao system log in debug mode.
-        if ($this->isDebug) {
-            $message->addError($this->translator->trans('OAUTH_CLIENT_ERR.pleaseCheckSystemLogToFindOutMore', [], 'contao_default'));
-        }
-
-        $request->getSession()->set(SecurityRequestAttributes::AUTHENTICATION_ERROR, $exception);
-
-        return new RedirectResponse($targetPath);
+        return $this->authenticationFailureHandler->onAuthenticationFailure($request, $exception);
     }
 
     /**
@@ -276,39 +243,23 @@ class OAuth2Authenticator extends AbstractAuthenticator
         return $token;
     }
 
-    private function determineTargetPath(Request $request): string
-    {
-        // Do not use Contao Core's onAuthenticationFailure handler
-        // because this leads to a redirection loop.
-        $sessionBag = $this->getSessionBag($request);
-        $targetPath = $request->get('_target_path');
-
-        // Let's play it safe and make sure we always have a redirect URL.
-        if ($this->scopeMatcher->isFrontendRequest($request) && $sessionBag->has('_failure_path')) {
-            $targetPath = $sessionBag->get('_failure_path');
-        }
-
-        if (\is_string($targetPath)) {
-            $targetPath = base64_decode($targetPath, true);
-        }
-
-        if (empty($targetPath)) {
-            if ($this->scopeMatcher->isBackendRequest($request)) {
-                $targetPath = $this->router->generate('contao_backend', [], UrlGeneratorInterface::ABSOLUTE_URL);
-            } else {
-                $targetPath = $request->getSchemeAndHttpHost();
-            }
-        }
-
-        return $targetPath;
-    }
-
-    private function getSessionBag(Request $request): SessionBagInterface
+    protected function getSessionBag(Request $request): SessionBagInterface
     {
         if ($this->scopeMatcher->isBackendRequest($request)) {
             return $request->getSession()->getBag('markocupic_contao_oauth2_client_attr_backend');
         }
 
         return $request->getSession()->getBag('markocupic_contao_oauth2_client_attr_frontend');
+    }
+
+    protected function checkState(Request $request): bool
+    {
+        $sessionBag = $this->getSessionBag($request);
+
+        return match (true) {
+            empty($request->query->get('state')), empty($sessionBag->get('oauth2state')) => false,
+            $request->query->get('state') !== $sessionBag->get('oauth2state') => false,
+            default => true,
+        };
     }
 }

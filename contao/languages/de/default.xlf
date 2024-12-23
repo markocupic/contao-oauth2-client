@@ -6,34 +6,6 @@
         <source>or</source>
         <target>oder</target>
       </trans-unit>
-      <trans-unit id="OAUTH_CLIENT_ERR.noContaoUserFoundAuth">
-        <source>Login attempt failed. You were not found in the user database.</source>
-        <target>Login-Versuch gescheitert. Sie wurden nicht in der User-Datenbank gefunden.</target>
-      </trans-unit>
-      <trans-unit id="OAUTH_CLIENT_ERR.noContaoMemberFoundAuth">
-        <source>Login attempt failed. You were not found in the member database.</source>
-        <target>Login-Versuch gescheitert Sie wurden nicht in der Member-Datenbank gefunden.</target>
-      </trans-unit>
-      <trans-unit id="OAUTH_CLIENT_ERR.identityProviderAuth">
-        <source>Login attempt failed. No access to the user data transmitted by the provider possible.</source>
-        <target>Login-Versuch gescheitert. Kein Zugriff auf die vom Provider übermittelten Benutzerdaten möglich.</target>
-      </trans-unit>
-      <trans-unit id="OAUTH_CLIENT_ERR.unexpectedAuth">
-        <source>Login attempt failed. There has been an unexpected error.</source>
-        <target>Login-Versuch gescheitert. Es ist ein unerwarteter Fehler aufgetreten.</target>
-      </trans-unit>
-      <trans-unit id="OAUTH_CLIENT_ERR.noAuthCodeAuth">
-        <source>Login attempt failed. Did you authorize our app?</source>
-        <target>Login-Versuch gescheitert. Haben Sie die App autorisiert?</target>
-      </trans-unit>
-      <trans-unit id="OAUTH_CLIENT_ERR.invalidStateAuth">
-        <source>Login attempt failed. Invalid state parameter passed in callback URL.</source>
-        <target>Login-Versuch gescheitert. Es wurde kein gültiger State-Parameter in der Callback-URL gefunden.</target>
-      </trans-unit>
-      <trans-unit id="OAUTH_CLIENT_ERR.clientNotActivatedAuth">
-        <source>Login attempt with the selected login provider failed. The client is not activated.</source>
-        <target>Login-Versuch mit dem ausgewählten Login Provider gescheitert. Der Client ist nicht aktiviert.</target>
-      </trans-unit>
     </body>
   </file>
 </xliff>
