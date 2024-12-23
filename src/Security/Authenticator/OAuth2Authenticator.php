@@ -90,11 +90,10 @@ class OAuth2Authenticator extends AbstractAuthenticator
         return true;
     }
 
-    /**
-     * @param AuthenticationException|null $authException
-     */
-    public function start(Request $request, string $clientName, AuthenticationException|null $authException = null): RedirectResponse|Response
+    public function authorize(Request $request): RedirectResponse|Response
     {
+        $clientName = $request->attributes->get('markocupic_contao_oauth2_client::client_name');
+
         $clientFactory = $this->clientFactoryManager->getClientFactory($clientName);
 
         if (!$clientFactory->isEnabled()) {
@@ -103,7 +102,7 @@ class OAuth2Authenticator extends AbstractAuthenticator
 
         $client = $clientFactory->createClient($request);
 
-        // Call the /authorize endpoint from the provider.
+        // Call the /authorize endpoint from the identity provider.
         // This returns the urlAuthorize option and generates and applies any necessary parameters
         // (e.g. code, state, ...).
         $authorizationUrl = $client->getAuthorizationUrl();
@@ -134,11 +133,12 @@ class OAuth2Authenticator extends AbstractAuthenticator
         // Get the message adapter.
         $message = $this->framework->getAdapter(Message::class);
 
+        // Restore the state
         $sessionBag = $this->getSessionBag($request);
         $request->request->set('_target_path', $sessionBag->get('_target_path'));
         $request->request->set('_always_use_target_path', $sessionBag->get('_always_use_target_path'));
 
-        // Get the oauth2 client name from request.
+        // Retrieve the oauth2 client name from request.
         $clientName = $request->attributes->get('_oauth2_client');
 
         $clientFactory = $this->clientFactoryManager->getClientFactory($clientName);

@@ -53,10 +53,18 @@ class Plugin implements BundlePluginInterface, RoutingPluginInterface, Extension
         foreach ($extensionConfigs as &$extensionConfig) {
             if (isset($extensionConfig['firewalls'], $extensionConfig['firewalls']['contao_frontend'])) {
                 $extensionConfig['firewalls']['contao_frontend']['custom_authenticators'][] = OAuth2Authenticator::class;
+
+                if (empty($extensionConfig['firewalls']['contao_frontend']['entry_point'])) {
+                    $extensionConfig['firewalls']['contao_frontend']['entry_point'] = 'contao_login';
+                }
             }
 
             if (isset($extensionConfig['firewalls'], $extensionConfig['firewalls']['contao_backend'])) {
                 $extensionConfig['firewalls']['contao_backend']['custom_authenticators'][] = OAuth2Authenticator::class;
+
+                if (empty($extensionConfig['firewalls']['contao_backend']['entry_point'])) {
+                    $extensionConfig['firewalls']['contao_backend']['entry_point'] = 'contao_login';
+                }
             }
         }
 

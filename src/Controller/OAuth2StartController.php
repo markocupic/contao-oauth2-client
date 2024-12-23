@@ -18,8 +18,8 @@ use Contao\CoreBundle\Csrf\ContaoCsrfTokenManager;
 use Contao\CoreBundle\Exception\InvalidRequestTokenException;
 use Contao\CoreBundle\Routing\ScopeMatcher;
 use Markocupic\ContaoOAuth2Client\OAuth2\Client\ClientFactoryManager;
-use Markocupic\ContaoOAuth2Client\Security\Authenticator\OAuth2Authenticator;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -30,6 +30,7 @@ use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Routing\RouterInterface;
 use Symfony\Component\Security\Csrf\CsrfToken;
+use Symfony\Component\Security\Http\Authenticator\AuthenticatorInterface;
 
 #[Route('/_start_oauth2_login/{_oauth2_client}/backend', name: self::LOGIN_ROUTE_BACKEND, defaults: ['_scope' => 'backend', '_token_check' => false])]
 #[Route('/_start_oauth2_login/{_oauth2_client}/frontend', name: self::LOGIN_ROUTE_FRONTEND, defaults: ['_scope' => 'frontend', '_token_check' => false])]
@@ -43,10 +44,14 @@ class OAuth2StartController extends AbstractController
         private bool $enableCsrfTokenCheck,
         private readonly ClientFactoryManager $clientFactoryManager,
         private readonly ContaoCsrfTokenManager $tokenManager,
-        private readonly OAuth2Authenticator $authenticator,
+        // The custom authenticator has to be autowired and should not be type hinted explicitly
+        // (See: https://github.com/symfony/symfony/issues/59091#issuecomment-2539293444)
+        #[Autowire(service: 'Markocupic\ContaoOAuth2Client\Security\Authenticator\OAuth2Authenticator')]
+        private readonly AuthenticatorInterface $authenticator,
         private readonly RouterInterface $router,
         private readonly ScopeMatcher $scopeMatcher,
         private readonly UriSigner $uriSigner,
+        private readonly Security $security,
         #[Autowire('%contao.csrf_token_name%')]
         private readonly string|null $defaultTokenName = null,
     ) {
@@ -68,6 +73,9 @@ class OAuth2StartController extends AbstractController
         if (!$clientFactory->isEnabled()) {
             return new JsonResponse(['message' => 'Bad Request: OAuth2Login is not enabled.'], Response::HTTP_BAD_REQUEST);
         }
+
+        // Pass the client name to the authenticator via request attribute
+        $request->attributes->set('markocupic_contao_oauth2_client::client_name', $clientName);
 
         // Check CSRF token
         if ($this->defaultTokenName && $this->enableCsrfTokenCheck) {
@@ -91,7 +99,8 @@ class OAuth2StartController extends AbstractController
             $sessionBag->set('_failure_path', $failurePath);
         }
 
-        return $this->authenticator->start($request, $clientName);
+        // Redirect the user to the authorization endpoint of the identity provider
+        return $this->authenticator->authorize($request);
     }
 
     private function getSessionBag(Request $request): SessionBagInterface
