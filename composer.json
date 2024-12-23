@@ -28,12 +28,13 @@
         "symfony/dependency-injection": "^6.4 || ^7.0",
         "symfony/http-foundation": "^6.4 || ^7.0",
         "symfony/http-kernel": "^6.4 || ^7.0",
-        "symfony/security-core": "^6.4|| ^7.0",
+        "symfony/security-core": "^6.4 || ^7.0",
         "symfony/security-http": "^6.4 || ^7.0",
         "symfony/asset": "^6.4 || ^7.0"
     },
     "require-dev": {
-        "contao/manager-plugin": "^2.12"
+        "contao/manager-plugin": "^2.12",
+        "contao/easy-coding-standard": "^5.4"
     },
     "autoload": {
         "psr-4": {
@@ -44,7 +45,9 @@
         "allow-plugins": {
             "contao-components/installer": false,
             "contao/manager-plugin": false,
-            "contao-community-alliance/composer-plugin": true
+            "contao-community-alliance/composer-plugin": true,
+            "php-http/discovery": false,
+            "dealerdirect/phpcodesniffer-composer-installer": true
         }
     },
     "extra": {

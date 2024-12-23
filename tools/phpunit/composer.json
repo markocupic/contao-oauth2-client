@@ -2,5 +2,12 @@
     "require": {
         "phpunit/phpunit": "^9.5",
         "contao/test-case": "^5.0"
+    },
+    "config": {
+        "allow-plugins": {
+            "contao-components/installer": false,
+            "contao/manager-plugin": false,
+            "contao-community-alliance/composer-plugin": true
+        }
     }
 }
