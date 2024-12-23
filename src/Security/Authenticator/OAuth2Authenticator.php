@@ -44,7 +44,6 @@ use Symfony\Component\Routing\RouterInterface;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\Exception\AuthenticationException;
 use Symfony\Component\Security\Http\Authenticator\AbstractAuthenticator;
-use Symfony\Component\Security\Http\Authenticator\Passport\Badge\UserBadge;
 use Symfony\Component\Security\Http\Authenticator\Passport\Passport;
 use Symfony\Component\Security\Http\Authenticator\Passport\SelfValidatingPassport;
 use Symfony\Component\Security\Http\SecurityRequestAttributes;
@@ -192,9 +191,9 @@ class OAuth2Authenticator extends AbstractAuthenticator
 
             // Extract the Contao user from token (claims)
             $tokenHandler = $this->tokenHandlerManager->getTokenHandler($clientName);
-            $user = $tokenHandler->getUserFromResourceOwner($resourceOwner, $firewallName);
+            $userBadge = $tokenHandler->getUserBadgeFromResourceOwner($resourceOwner, $firewallName);
 
-            if (!$user instanceof User) {
+            if (null === $userBadge) {
                 if ($this->scopeMatcher->isBackendRequest($request)) {
                     throw new NoContaoUserFoundAuthenticationException('No matching Contao Backend User found in the Database.');
                 }
@@ -202,7 +201,7 @@ class OAuth2Authenticator extends AbstractAuthenticator
                 throw new NoContaoMemberFoundAuthenticationException('No matching Contao Frontend User found in the Database.');
             }
 
-            return new SelfValidatingPassport(new UserBadge($user->getUserIdentifier()));
+            return new SelfValidatingPassport($userBadge);
         } catch (AbstractAuthenticationException|IdentityProviderException $e) {
             $messageKey = $e instanceof IdentityProviderException ? 'identityProviderAuth' : $e->getMessageKey();
 

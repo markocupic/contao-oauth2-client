@@ -15,17 +15,16 @@ declare(strict_types=1);
 namespace Markocupic\ContaoOAuth2Client\OAuth2\Token;
 
 use Contao\BackendUser;
+use Contao\CoreBundle\Framework\Adapter;
 use Contao\CoreBundle\Framework\ContaoFramework;
 use Contao\FrontendUser;
-use Contao\MemberModel;
 use Contao\User;
-use Contao\UserModel;
 use Contao\Validator;
 use Doctrine\DBAL\Connection;
-use Doctrine\DBAL\Types\Types;
 use League\OAuth2\Client\Provider\ResourceOwnerInterface;
+use Symfony\Component\Security\Http\Authenticator\Passport\Badge\UserBadge;
 
-final class DefaultTokenHandler implements TokenHandlerInterface
+class DefaultTokenHandler implements TokenHandlerInterface
 {
     /**
      * The claim where the user identifier is stored.
@@ -54,84 +53,81 @@ final class DefaultTokenHandler implements TokenHandlerInterface
         return ['default'];
     }
 
-    public function getUserFromResourceOwner(ResourceOwnerInterface $resourceOwner, string $firewall): User|null
+    public function getUserBadgeFromResourceOwner(ResourceOwnerInterface $resourceOwner, string $firewall): UserBadge|null
     {
-        $payload = $resourceOwner->toArray();
+        $claims = $resourceOwner->toArray();
 
-        if (empty($payload[$this->getClaim()])) {
+        [$userClass, $table] = match ($firewall) {
+            'contao_backend' => [BackendUser::class, 'tl_user'],
+            default => [FrontendUser::class, 'tl_member'],
+        };
+
+        $user = $this->getContaoUserFromClaims($claims, $table, $userClass);
+
+        // Test if login is allowed
+        if (empty($user) || !$this->canLogin($user)) {
             return null;
         }
 
-        $identifier = $payload[$this->getClaim()];
+        return new UserBadge($user->getUserIdentifier());
+    }
 
-        $validatorAdapter = $this->framework->getAdapter(Validator::class);
-
-        // Contao backend login
-        if ('contao_backend' === $firewall) {
-            $userModel = $this->framework->getAdapter(UserModel::class);
-
-            // email should not be treated case-sensitive
-            if ('email' === $this->getContaoIdentifierFieldName() && $validatorAdapter->isEmail($identifier)) {
-                $email = $this->connection->fetchOne('SELECT email FROM tl_user WHERE email LIKE ?', [$identifier], [Types::STRING]);
-
-                if (false === $email) {
-                    return null;
-                }
-
-                $identifier = $email;
-            }
-
-            $user = $userModel->findOneBy($this->getContaoIdentifierFieldName(), $identifier);
-
-            // Test if login as a backend user is permitted
-            if ($user->disable || ('' !== $user->start && (int) $user->start > time()) || ('' !== $user->stop && (int) $user->stop < time())) {
-                return null;
-            }
-        } else {
-            // Contao frontend login
-            $memberModel = $this->framework->getAdapter(MemberModel::class);
-
-            // email should not be treated case-sensitive
-            if ('email' === $this->getContaoIdentifierFieldName() && $validatorAdapter->isEmail($identifier)) {
-                $email = $this->connection->fetchOne('SELECT email FROM tl_member WHERE email LIKE ?', [$identifier], [Types::STRING]);
-
-                if (false === $email) {
-                    return null;
-                }
-
-                $identifier = $email;
-            }
-
-            $user = $memberModel->findOneBy($this->getContaoIdentifierFieldName(), $identifier);
-
-            // Test if login as a frontend user is permitted
-            if (!$user->login || $user->disable || ('' !== $user->start && (int) $user->start > time()) || ('' !== $user->stop && (int) $user->stop < time())) {
-                return null;
-            }
-        }
-
-        if (null === $user) {
+    protected function getContaoUserFromClaims(array $claims, string $table, string $userClass): User|null
+    {
+        if (empty($claims[$this->claim])) {
             return null;
         }
 
-        if ('contao_backend' === $firewall) {
-            $backendUser = $this->framework->getAdapter(BackendUser::class);
-            $user = $backendUser->loadUserByIdentifier($user->username);
-        } else {
-            $frontendUser = $this->framework->getAdapter(FrontendUser::class);
-            $user = $frontendUser->loadUserByIdentifier($user->username);
+        $identifierClaim = $claims[$this->claim];
+
+        if (!$this->getValidator()->isEmail($identifierClaim)) {
+            return null;
         }
 
-        return $user;
+        $qb = $this->connection->createQueryBuilder();
+
+        $qb->select('t.username')
+            ->from($table, 't')
+            ->where($qb->expr()->like("t.$this->contaoIdentifierFieldName", $qb->expr()->literal($identifierClaim)))
+        ;
+
+        $userIdentifier = $qb->fetchOne();
+
+        if (!$userIdentifier) {
+            return null;
+        }
+
+        /** @var User $userProvider */
+        $userProvider = $this->framework->getAdapter($userClass);
+
+        return $userProvider->loadUserByIdentifier($userIdentifier);
     }
 
-    private function getClaim(): string
+    protected function canLogin(User $user): bool
     {
-        return $this->claim;
+        if ($user->disable) {
+            return false;
+        }
+
+        if ('' !== $user->start && (int) $user->start > time()) {
+            return false;
+        }
+
+        if ('' !== $user->stop && (int) $user->stop < time()) {
+            return false;
+        }
+
+        if ($user instanceof FrontendUser) {
+            if (!$user->login) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
-    private function getContaoIdentifierFieldName(): string
+    protected function getValidator(): Adapter
     {
-        return $this->contaoIdentifierFieldName;
+        return $this->framework->getAdapter(Validator::class);
     }
 }

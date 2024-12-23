@@ -14,9 +14,9 @@ declare(strict_types=1);
 
 namespace Markocupic\ContaoOAuth2Client\OAuth2\Token;
 
-use Contao\User;
 use League\OAuth2\Client\Provider\ResourceOwnerInterface;
 use Symfony\Component\DependencyInjection\Attribute\AutoconfigureTag;
+use Symfony\Component\Security\Http\Authenticator\Passport\Badge\UserBadge;
 
 #[AutoconfigureTag('contao_oauth2_client.token_handler')]
 interface TokenHandlerInterface
@@ -26,5 +26,5 @@ interface TokenHandlerInterface
      */
     public function supports(): array;
 
-    public function getUserFromResourceOwner(ResourceOwnerInterface $resourceOwner, string $firewall): User|null;
+    public function getUserBadgeFromResourceOwner(ResourceOwnerInterface $resourceOwner, string $firewall): UserBadge|null;
 }
