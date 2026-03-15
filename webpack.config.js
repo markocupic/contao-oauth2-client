@@ -31,7 +31,11 @@ Encore
 		config.corejs = 3;
 	})
 
-	.enablePostCssLoader()
+    // Preprocessing SCSS to CSS
+    .enableSassLoader()
+    .enablePostCssLoader()
+    .addStyleEntry('css/backend', './assets/styles/backend.scss')
+    .addStyleEntry('css/login_button', './assets/styles/login_button.scss')
 ;
 
 module.exports = Encore.getWebpackConfig();

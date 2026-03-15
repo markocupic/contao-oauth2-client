@@ -1,5 +1,7 @@
 .oauth-login-container {
-
+  display: flex;
+  flex-direction: column;
+  background: var(--content-bg);
   padding: 45px;
 
   &[data-contao-login="enabled"] {
@@ -22,19 +24,18 @@
 
   .login-btn-separator-container {
     margin-top: 20px;
-    margin-bottom: 20px;
 
     .login-btn-separator {
       display: flex;
       align-items: center;
       text-align: center;
-      color: #c6c6c6;
+      color: var(--text);
     }
 
     .login-btn-separator::before, .login-btn-separator::after {
       content: '';
       flex: 1;
-      border-bottom: 1px solid #d4d4d4;
+      border-bottom: 1px solid var(--border);
     }
 
     .login-btn-separator::before {
@@ -46,3 +47,5 @@
     }
   }
 }
+
+

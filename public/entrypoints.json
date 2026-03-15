@@ -1,3 +1,14 @@
 {
-  "entrypoints": {}
+  "entrypoints": {
+    "css/backend": {
+      "css": [
+        "/bundles/markocupiccontaooauth2client/css/backend.ca2d31a7.css"
+      ]
+    },
+    "css/login_button": {
+      "css": [
+        "/bundles/markocupiccontaooauth2client/css/login_button.febce361.css"
+      ]
+    }
+  }
 }

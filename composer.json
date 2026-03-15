@@ -34,7 +34,7 @@
     },
     "require-dev": {
         "contao/manager-plugin": "^2.12",
-        "contao/easy-coding-standard": "^5.4"
+        "contao/easy-coding-standard": "^6.13"
     },
     "autoload": {
         "psr-4": {
