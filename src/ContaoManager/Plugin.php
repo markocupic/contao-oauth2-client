@@ -25,6 +25,7 @@ use Markocupic\ContaoOAuth2Client\MarkocupicContaoOAuth2Client;
 use Markocupic\ContaoOAuth2Client\Security\Authenticator\OAuth2Authenticator;
 use Symfony\Component\Config\Loader\LoaderResolverInterface;
 use Symfony\Component\HttpKernel\KernelInterface;
+use Symfony\Component\Routing\RouteCollection;
 
 class Plugin implements BundlePluginInterface, RoutingPluginInterface, ExtensionPluginInterface
 {
@@ -36,7 +37,7 @@ class Plugin implements BundlePluginInterface, RoutingPluginInterface, Extension
         ];
     }
 
-    public function getRouteCollection(LoaderResolverInterface $resolver, KernelInterface $kernel)
+    public function getRouteCollection(LoaderResolverInterface $resolver, KernelInterface $kernel): RouteCollection|null
     {
         return $resolver
             ->resolve(__DIR__.'/../Controller')
