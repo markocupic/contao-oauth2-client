@@ -31,6 +31,7 @@ use Markocupic\ContaoOAuth2Client\Security\Authenticator\Exception\InvalidStateA
 use Markocupic\ContaoOAuth2Client\Security\Authenticator\Exception\NoAuthCodeAuthenticationException;
 use Markocupic\ContaoOAuth2Client\Security\Authenticator\Exception\NoContaoMemberFoundAuthenticationException;
 use Markocupic\ContaoOAuth2Client\Security\Authenticator\Exception\NoContaoUserFoundAuthenticationException;
+use Psr\Log\LoggerInterface;
 use Scheb\TwoFactorBundle\Security\Http\Authenticator\TwoFactorAuthenticator;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
@@ -57,6 +58,7 @@ class OAuth2Authenticator extends AbstractAuthenticator
         private readonly EventDispatcherInterface $eventDispatcher,
         private readonly ScopeMatcher $scopeMatcher,
         private readonly TokenHandlerManager $tokenHandlerManager,
+        private readonly LoggerInterface|null $contaoErrorLogger,
     ) {
     }
 
@@ -196,12 +198,14 @@ class OAuth2Authenticator extends AbstractAuthenticator
             }
 
             return new SelfValidatingPassport($userBadge);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             $error = match (true) {
                 $e instanceof AbstractAuthenticationException => sprintf('OAuth Login with APP "%s" (%s) failed with code "%s".', $clientFactory->getName(), $clientFactory->getProviderType(), $e->getMessageKey()),
                 $e instanceof IdentityProviderException => sprintf('OAuth Login with APP "%s" (%s) failed with code "%s".', $clientFactory->getName(), $clientFactory->getProviderType(), 'identityProviderAuth'),
                 default => sprintf('OAuth Login with APP "%s" (%s) failed with error "%s".', $clientFactory->getName(), $clientFactory->getProviderType(), $e->getMessage()),
             };
+
+            $this->contaoErrorLogger?->error($e->getMessage());
 
             throw new AuthenticationException($error);
         }
